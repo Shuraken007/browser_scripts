@@ -4,6 +4,10 @@ Works with Tampermonkey(any desktop browser) or Userscripts (safari IOS).
 Json config with replacements should be store at any web source.
 [https://github.com/], [https://www.npoint.io/], find your source
 
+## Install
+Just copy replacement.js to Tampermonkey / Userscripts.
+Change url to your config.
+
 ## config format:
 config must be loaded on script start
 `load_config("https://some_source/my_config.json")`
