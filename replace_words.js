@@ -52,7 +52,7 @@ function run_mutations(mutations) {
    mutations.forEach(mutation => {
       if (mutation.type === "childList") {
          mutation.addedNodes.forEach(node => {
-            setTimeout(function () { replaceText(node); }, 20);
+            replaceText(node);
          });
       }
    });
