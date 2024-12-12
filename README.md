@@ -17,7 +17,7 @@ config looks this way:
    ],
    "url2": [
       "a.s.s.", "ass",
-      "/(\\w)\\.(\\w)\\.(\\w)\\./", "$1$2$3"
+      "/(\w)\.(\w)\.(\w)\./", "$1$2$3"
    ]
 }
 ```
@@ -30,20 +30,20 @@ current chapter is
 ### easy way *
 use `*`, it solves 99% cases
 `https://tw.wa01.com/novel/pagea/lunhuileyuan-nayizhiwenzi_*`
-if you really have `*` in your url (some extreme cases) - then escape it `\\*`
-`https://tw.wa01.com/novel/\\*/lunhuileyuan-nayizhiwenzi_*`
+if you really have `*` in your url (some extreme cases) - then escape it `\*`
+`https://tw.wa01.com/novel/\*/lunhuileyuan-nayizhiwenzi_*`
 ### hard way full regex
-- easy way - use unique part from url, no mess with delims `/`
+- easy way - use unique part from url, no mess with `/`
 `/lunhuileyuan-nayizhiwenzi_.*/`
-- full way - escape `[]^&$.()?/\+{}|*` with `\\`
-`https:\\/\\/tw\\.wa01\\.com\\/novel\\/pagea\\/lunhuileyuan-nayizhiwenzi_`
+- full way - escape `[]^&$.()?/\+{}|*` with `\`
+`https:\/\/tw\.wa01\.com\/novel\/pagea\/lunhuileyuan-nayizhiwenzi_`
 - add bounds /url/
-`/https:\\/\\/tw\\.wa01\\.com\\/novel\\/pagea\\/lunhuileyuan-nayizhiwenzi_/`
+`/https:\/\/tw\.wa01\.com\/novel\/pagea\/lunhuileyuan-nayizhiwenzi_/`
 - add your regex part
-`/https:\\/\\/tw\\.wa01\\.com\\/novel\\/pagea\\/lunhuileyuan-nayizhiwenzi_.+/`
+`/https:\/\/tw\.wa01\.com\/novel\/pagea\/lunhuileyuan-nayizhiwenzi_.+/`
 - example for specific chapters
 `[1][0-9]` - chapters 10 - 19
-`/https:\\/\\/tw\\.wa01\\.com\\/novel\\/pagea\\/lunhuileyuan-nayizhiwenzi_[1][0-9]/`
+`/https:\/\/tw\.wa01\.com\/novel\/pagea\/lunhuileyuan-nayizhiwenzi_[1][0-9]/`
 
 ## replacements
 they also supports regexp

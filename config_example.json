@@ -1,19 +1,28 @@
 {
    //china->china
-   "https://tw.wa01.com/novel/pagea/lunhuileyuan-nayizhiwenzi_*": {
-      "效果": "属性", // Эффект -> Атрибут
-      "歐皇狀態": "运气状态", // Статус Европейского Императора (Ōu huáng) -> Статус удачи
-      "王者御尊": "皇帝的荣誉", // Король Королей -> Честь императора (сетовая шмотка)
-      "月世界": "月球世界" // Лунный Мир
-   },
+   "https://tw.wa01.com/novel/pagea/lunhuileyuan-nayizhiwenzi_*": [
+      "效果",
+      "属性", // Эффект -> Атрибут
+      "歐皇狀態",
+      "运气状态", // Статус Европейского Императора (Ōu huáng) -> Статус удачи
+      "王者御尊",
+      "皇帝的荣誉", // Король Королей -> Честь императора (сетовая шмотка)
+      "月世界",
+      "月球世界" // Лунный Мир
+   ],
    //china->ru, best with Google Translate
-   "https://tw.wa01.com/novel/pagea/lunhuileyuan-nayizhiwe*": {
-      "青鋼影": "Цин Ган Инь",
-      "‘青影王’": "Повелитель Лазурной Тени",
-      "青影王": "Повелитель Лазурной Тени",
-      "布布汪": "Буптни",
-      "百貌": "Столикий"
-   },
+   "https://tw.wa01.com/novel/pagea/lunhuileyuan-nayizhiwe*": [
+      "青鋼影",
+      "Цин Ган Инь",
+      "‘青影王’",
+      "Повелитель Лазурной Тени",
+      "青影王",
+      "Повелитель Лазурной Тени",
+      "布布汪",
+      "Буптни",
+      "百貌",
+      "Столикий"
+   ],
    //ru->ru
-   "https://tw.wa01.com/novel/pagea/lunhuileyuan-nayizhiwen*": {}
+   "https://tw.wa01.com/novel/pagea/lunhuileyuan-nayizhiwen*": []
 }
