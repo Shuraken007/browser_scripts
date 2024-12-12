@@ -96,10 +96,11 @@ function prepareRegex(string) {
 
 function getRegFromString(string) {
    var a = string.split("/");
-   modifiers = a.pop(); a.shift();
+   modifiers = a.pop();
+   a.shift();
    pattern = a.join("/");
-   if (modifiers.includes('g')) {
-      modifiers.replaceAll('g', '');
+   if (!modifiers.includes('g')) {
+      modifiers += 'g'
    }
    // console.log(`pattern: ${pattern}, modifiers: ${modifiers}`)
    return new RegExp(pattern, modifiers);

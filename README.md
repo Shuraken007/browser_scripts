@@ -50,3 +50,4 @@ they also supports regexp
 `"/(?:blue|green) shadow king/i", "Цин Ган Инь"`
 google `javascript regex` if want more examples
 script use function `string.replaceAll(pattern, replacement)`
+modifier global `g` auto inserted
