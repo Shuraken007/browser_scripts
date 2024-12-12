@@ -9,7 +9,7 @@ config must be loaded on script start
 `load_config("https://some_source/my_config.json")`
 
 config looks this way:
-```json
+```
 {
    "https://some_novel_site/my_novel/chapter_*": [
       "效果", "属性",
