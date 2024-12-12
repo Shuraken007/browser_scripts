@@ -8,7 +8,6 @@ async function main() {
    while (!replacements) {
       await new Promise(r => setTimeout(r, 200));
       counter++;
-      console.log('waiting')
       if (counter > 10) {
          throw new Error("config with replacements not loaded");
       }
