@@ -1,4 +1,5 @@
 var replacements = null
+var config_data = null
 const observer = new MutationObserver(run_mutations);
 
 async function main() {
@@ -17,14 +18,21 @@ async function main() {
       console.log("no replacements for this site!");
       return
    }
+
    observer.observe(document.body, { childList: true, subtree: true });
    replaceText(document.body);
-   // Your code here...
+
+   GM.setValue("replacement_json_config", JSON.stringify(config_data))
 };
 
-function load_config(link) {
-   $.getJSON(link)
-      .done(build_suited_config);
+async function load_config(link) {
+   var restored_config = await GM.getValue("replacement_json_config", null)
+   if (restored_config) {
+      var data = JSON.parse(restored_config);
+      build_suited_config(data)
+      return
+   }
+   $.getJSON(link).done(build_suited_config);
 }
 
 function build_suited_config(data) {
@@ -45,7 +53,8 @@ function build_suited_config(data) {
          replacements.push(replacement)
       }
    }
-   console.log(replacements)
+   config_data = data
+   // console.log(replacements)
 }
 
 function run_mutations(mutations) {

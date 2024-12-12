@@ -8,7 +8,8 @@
 // @include http://*/*
 // @require https://raw.githubusercontent.com/Shuraken007/browser_scripts/refs/heads/main/replace_words.js
 // @require https://code.jquery.com/jquery-3.6.0.min.js
-// @grant        none
+// @grant        GM.getValue
+// @grant        GM.setValue
 // ==/UserScript==
 load_config("https://api.npoint.io/ecef5ef17a23b6bd2222")
 addEventListener("load", main)
