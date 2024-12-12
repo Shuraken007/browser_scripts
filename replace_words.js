@@ -6,14 +6,17 @@ async function main() {
 
    var counter = 0;
    while (!replacements) {
-      await new Promise(r => setTimeout(r, 200));
+      await new Promise(r => setTimeout(r, 500));
       counter++;
       if (counter > 10) {
          throw new Error("config with replacements not loaded");
       }
    }
-
    console.log("config loaded!");
+   if (replacements.length == 0) {
+      console.log("no replacements for this site!");
+      return
+   }
    observer.observe(document.body, { childList: true, subtree: true });
    replaceText(document.body);
    // Your code here...
@@ -25,7 +28,6 @@ function load_config(link) {
 }
 
 function build_suited_config(data) {
-   // console.log(data);
    var cur_url = window.location.href;
    replacements = [];
    for (const [k, v] of Object.entries(data)) {
@@ -50,7 +52,7 @@ function run_mutations(mutations) {
    mutations.forEach(mutation => {
       if (mutation.type === "childList") {
          mutation.addedNodes.forEach(node => {
-            replaceText(node);
+            setTimeout(function () { replaceText(node); }, 20);
          });
       }
    });
@@ -65,7 +67,8 @@ function replaceText(node) {
          let text = node.textContent;
          if (!text) { break; }
          // console.log(node.nodeType, node.nodeValue)
-         node.textContent = make_replacements(text);
+         new_text = make_replacements(text);
+         if (text != new_text) { node.textContent = new_text }
          break;
       }
       case Node.DOCUMENT_NODE:
