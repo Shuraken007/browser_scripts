@@ -1,11 +1,11 @@
-var json_config = null
+var replacements = null
 const observer = new MutationObserver(run_mutations);
 
 async function main() {
    'use strict';
 
    var counter = 0;
-   while (!json_config) {
+   while (!replacements) {
       await new Promise(r => setTimeout(r, 200));
       counter++;
       console.log('waiting')
@@ -28,19 +28,23 @@ function load_config(link) {
 function build_suited_config(data) {
    // console.log(data);
    var cur_url = window.location.href;
-   json_config = new Map();
+   replacements = [];
    for (const [k, v] of Object.entries(data)) {
-      url_token = tokenToRegex(k)
+      url_token = tokenToRegex(k, true)
+      url_token = new RegExp(url_token)
       if (!url_token.test(cur_url)) {
          continue
       }
-      for (const [token, replacement] of Object.entries(v)) {
-         regex = tokenToRegex(token)
-         // console.log(typeof (regex))
-         json_config.set(tokenToRegex(token), replacement)
+
+      for (let i = 0; i < v.length; i += 2) {
+         regex = tokenToRegex(v[i])
+         replacement = tokenToRegex(v[i + 1])
+
+         replacements.push(regex)
+         replacements.push(replacement)
       }
    }
-   console.log(json_config)
+   console.log(replacements)
 }
 
 function run_mutations(mutations) {
@@ -52,12 +56,6 @@ function run_mutations(mutations) {
       }
    });
 }
-
-const replacements = new Map([
-   ['习近平', '村长'],
-   ['关键词1', '替换1'],
-   ['关键词2', '替换2'],
-]);
 
 function replaceText(node) {
    switch (node.nodeType) {
@@ -77,11 +75,10 @@ function replaceText(node) {
 }
 
 function make_replacements(text) {
-   for (const [regex, replacement] of json_config.entries()) {
-      // if (text.includes("Су Сяо")) {
-      //    console.log(typeof (regex), replacement)
-      // }
-      text = text.replace(regex, replacement);
+   for (let i = 0; i < replacements.length; i += 2) {
+      regex = replacements[i]
+      replacement = replacements[i + 1]
+      text = text.replaceAll(regex, replacement);
    }
    return text
 }
@@ -89,7 +86,9 @@ function make_replacements(text) {
 // prepareRegex by JoeSimmons
 // used to take a string and ready it for use in new RegExp()
 function prepareRegex(string) {
+   // escape: []^&$.()?/\+{}|
    string = string.replace(/([\[\]\^\&\$\.\(\)\?\/\\\+\{\}\|])/g, '\\$1');
+   // '*' -> '[^ ]*', but '\*' -> '*'
    string = string.replace(/\\?\*/g, function (fullMatch) {
       return fullMatch === '\\*' ? '*' : '[^ ]*';
    })
@@ -100,20 +99,22 @@ function getRegFromString(string) {
    var a = string.split("/");
    modifiers = a.pop(); a.shift();
    pattern = a.join("/");
-   if (!modifiers.includes('g')) {
-      modifiers += 'g'
+   if (modifiers.includes('g')) {
+      modifiers.replaceAll('g', '');
    }
    // console.log(`pattern: ${pattern}, modifiers: ${modifiers}`)
    return new RegExp(pattern, modifiers);
 }
 
 var rIsRegexp = /^\/(.+)\/([gim]+)?$/;
-function tokenToRegex(string) {
+function tokenToRegex(string, is_prepared = false) {
    if (string.match(rIsRegexp)) {
       // console.log(`user_regexp: ${string}`)
       return getRegFromString(string)
    }
-   str_as_regex = prepareRegex(string)
-   // console.log(`pattern: ${str_as_regex}`)
-   return new RegExp(str_as_regex, 'g')
+   if (is_prepared) {
+      string = prepareRegex(string);
+      return new RegExp(string);
+   }
+   return string
 }
