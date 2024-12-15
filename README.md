@@ -13,7 +13,7 @@ config must be loaded on script start<br />
 `load_config("https://some_source/my_config.json")`
 
 config looks this way:<br />
-```
+```json
 {
    "https://some_novel_site/my_novel/chapter_*": [
       "效果", "属性",
@@ -21,7 +21,11 @@ config looks this way:<br />
    ],
    "url2": [
       "a.s.s.", "ass",
-      "/(\w)\.(\w)\.(\w)\./", "$1$2$3"
+      "/(\\d+)～(\\d+)/", "($1~$2)",
+      "/(?:\\s|^)(.{1,5})～(?:\\s|$)/", "⟦ $1 ⟧",
+      "國足三人", ["Troitsa Of Hooligans ", "Troitsa Of Idiots ","Trinity of Jesters "],
+      "космически", "пространственны",
+      "космическ", "пространственн",
    ]
 }
 ```
@@ -34,20 +38,20 @@ current chapter is <br />
 ### easy way *
 use `*`, it solves 99% cases<br />
 `https://tw.wa01.com/novel/pagea/lunhuileyuan-nayizhiwenzi_*`<br />
-if you really have `*` in your url (some extreme cases) - then escape it `\*`<br />
-`https://tw.wa01.com/novel/\*/lunhuileyuan-nayizhiwenzi_*`
+if you really have `*` in your url (some extreme cases) - then escape it `\\*`<br />
+`https://tw.wa01.com/novel/\\*/lunhuileyuan-nayizhiwenzi_*`
 ### hard way full regex
 - easy way - use unique part from url, no mess with `/`
 `/lunhuileyuan-nayizhiwenzi_.*/`
-- full way - escape `[]^&$.()?/\+{}|*` with<br />
-`https:\/\/tw\.wa01\.com\/novel\/pagea\/lunhuileyuan-nayizhiwenzi_`
+- full way - escape `[]^&$.()?/\+{}|*` with `\\` <br />
+`https:\\/\\/tw\\.wa01\\.com\\/novel\\/pagea\\/lunhuileyuan-nayizhiwenzi_`
 - add bounds /url/<br />
-`/https:\/\/tw\.wa01\.com\/novel\/pagea\/lunhuileyuan-nayizhiwenzi_/`
+`/https:\\/\\/tw\\.wa01\\.com\\/novel\\/pagea\\/lunhuileyuan-nayizhiwenzi_/`
 - add your regex part
-`/https:\/\/tw\.wa01\.com\/novel\/pagea\/lunhuileyuan-nayizhiwenzi_.+/`
+`/https:\\/\\/tw\\.wa01\\.com\\/novel\\/pagea\\/lunhuileyuan-nayizhiwenzi_.+/`
 - example for specific chapters
 `[1][0-9]` - chapters 10 - 19<br />
-`/https:\/\/tw\.wa01\.com\/novel\/pagea\/lunhuileyuan-nayizhiwenzi_[1][0-9]/`
+`/https:\\/\\/tw\\.wa01\\.com\\/novel\\/pagea\\/lunhuileyuan-nayizhiwenzi_[1][0-9]/`
 
 ## replacements
 they also supports regexp<br />
@@ -55,3 +59,6 @@ they also supports regexp<br />
 google `javascript regex` if want more examples<br />
 script use function `string.replaceAll(pattern, replacement)`<br />
 modifier global `g` auto inserted<br />
+
+array of replacements allowed, random would be choosed<br />:
+`"老三", ["Third Bro", "Younger Bro"],`<br />

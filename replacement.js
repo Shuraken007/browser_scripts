@@ -1,28 +1,29 @@
 // ==UserScript==
 // @name         Replacer
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.4
 // @license MIT
 // @description  replace words
 // @author       Shuraken007
 // @include https://*/*
 // @include http://*/*
+// @downloadURL https://update.greasyfork.org/scripts/520584/Replacer.user.js
+// @updateURL https://update.greasyfork.org/scripts/520584/Replacer.meta.js
 // ==/UserScript==
 
 /* jshint esversion: 8 */
 
-load_config("https://api.npoint.io/52eec657d69aa53f658a")
-addEventListener("load", main);
+load_config("https://api.npoint.io/97ef86b1e99dfc26c72d");
 
-var replacements = null;
-var config_data = null;
-const observer = new MutationObserver(run_mutations);
 const timer = ms => new Promise(res => setTimeout(res, ms));
+var replacements = null;
+const observer = new MutationObserver(run_mutations);
+
+waitForKeyElements("body", main, true);
+// addEventListener("load", main);
 
 async function main() {
    'use strict';
-   'esversion: 8';
-
    var counter = 0;
    while (!replacements) {
       await timer(200);
@@ -42,14 +43,13 @@ async function main() {
 }
 
 async function load_config(link) {
-   var restored_config_as_str = await localStorage.getItem("replacement_json_config");
-   var restored_config_as_json = null;
+   var restored_config_as_str = await localStorage.getItem("saved_replacement_config");
    if (restored_config_as_str) {
       build_suited_config(restored_config_as_str, null, true);
    }
    fetch(link)
       .then(response => response.text())
-      .then(str => build_suited_config(str, restored_config_as_str))
+      .then(str => build_suited_config(str, restored_config_as_str, false))
       .catch(err => console.log(err));
 }
 
@@ -61,26 +61,24 @@ function build_suited_config(data, restored_data = null, is_fast_load = false) {
    var data_as_json = JSON.parse(data);
    var cur_url = window.location.href;
    var new_replacements = [];
-   for (const [k, v] of Object.entries(data_as_json)) {
-      let url_token = tokenToRegex(k, true);
+   for (const [url_key, replacements_config] of Object.entries(data_as_json)) {
+      let url_token = tokenToRegex(url_key, true);
       url_token = new RegExp(url_token);
       if (!url_token.test(cur_url)) {
          continue;
       }
 
-      for (let i = 0; i < v.length; i += 2) {
-         let regex = tokenToRegex(v[i]);
-         let replacement = tokenToRegex(v[i + 1]);
+      for (let i = 0; i < replacements_config.length; i += 2) {
+         let regex = tokenToRegex(replacements_config[i]);
+         let replacement = replacements_config[i + 1];
 
          new_replacements.push(regex);
          new_replacements.push(replacement);
       }
    }
    replacements = new_replacements;
-   config_data = data;
-   //console.log(replacements)
    if (!is_fast_load) {
-      localStorage.setItem("replacement_json_config", data);
+      localStorage.setItem("saved_replacement_config", data);
       console.log('config updated');
       replaceText(document.body);
    }
@@ -114,10 +112,17 @@ function replaceText(node) {
    }
 }
 
+function get_random(list) {
+   return list[Math.floor((Math.random() * list.length))];
+}
+
 function make_replacements(text) {
    for (let i = 0; i < replacements.length; i += 2) {
       let regex = replacements[i];
       let replacement = replacements[i + 1];
+      if (replacement instanceof Array) {
+         replacement = get_random(replacement);
+      }
       text = text.replaceAll(regex, replacement);
    }
    return text;
@@ -158,4 +163,48 @@ function tokenToRegex(string, is_prepared = false) {
       return new RegExp(string);
    }
    return string;
+}
+
+// https://raw.githubusercontent.com/CoeJoder/waitForKeyElements.js/refs/heads/master/waitForKeyElements.js
+
+function waitForKeyElements(selectorOrFunction, callback, waitOnce, interval, maxIntervals) {
+   if (typeof waitOnce === "undefined") {
+      waitOnce = true;
+   }
+   if (typeof interval === "undefined") {
+      interval = 300;
+   }
+   if (typeof maxIntervals === "undefined") {
+      maxIntervals = -1;
+   }
+   if (typeof waitForKeyElements.namespace === "undefined") {
+      waitForKeyElements.namespace = Date.now().toString();
+   }
+   var targetNodes = (typeof selectorOrFunction === "function")
+      ? selectorOrFunction()
+      : document.querySelectorAll(selectorOrFunction);
+
+   var targetsFound = targetNodes && targetNodes.length > 0;
+   if (targetsFound) {
+      targetNodes.forEach(async function (targetNode) {
+         var attrAlreadyFound = `data-userscript-${waitForKeyElements.namespace}-alreadyFound`;
+         var alreadyFound = targetNode.getAttribute(attrAlreadyFound) || false;
+         if (!alreadyFound) {
+            var cancelFound = await callback(targetNode);
+            if (cancelFound) {
+               targetsFound = false;
+            }
+            else {
+               targetNode.setAttribute(attrAlreadyFound, true);
+            }
+         }
+      });
+   }
+
+   if (maxIntervals !== 0 && !(targetsFound && waitOnce)) {
+      maxIntervals -= 1;
+      setTimeout(function () {
+         waitForKeyElements(selectorOrFunction, callback, waitOnce, interval, maxIntervals);
+      }, interval);
+   }
 }
