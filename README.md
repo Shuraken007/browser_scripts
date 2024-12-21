@@ -204,7 +204,8 @@ example:
 
 As you see - it allows to include outer nodes or even load other jsons.
 ### how it works
-Firstly script recursively check all nodes and collect all names on all depth like `"name": {...}`<br />
+Firstly script recursively check all nodes <br />
+and collect all names on all depth like `"name": {...}`<br />
 Later script just insert in node with `__include` all data by aliases
 
 Example:<br />
