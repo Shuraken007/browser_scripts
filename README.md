@@ -72,6 +72,10 @@ config looks this way:
    }
 }
 ```
+Check here mine current config:<br />
+[https://www.npoint.io/docs/adca32df1622919ca5bd]<br />
+[https://www.npoint.io/docs/97ef86b1e99dfc26c72d]<br />
+
 You can create so much nested nodes with any names, as you want.<br />
 Script recursively parse json and collect pairs 
 ```
