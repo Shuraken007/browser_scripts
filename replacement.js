@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Replacer
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      2.2
 // @license MIT
 // @description  replace words
 // @author       Shuraken007
@@ -17,8 +17,11 @@
 const config = {
    "json_url": "https://api.npoint.io/adca32df1622919ca5bd",
    "traditional_to_simple_chinese": true,
-   "delay_scroll_on_reload": 5000,
    "default_priority_level": 1,
+   "reload_config_event": {
+      "max_clicks": 10,
+      "max_time_ms": 3000
+   }
 };
 
 const script_start = Date.now();
@@ -75,12 +78,11 @@ class ConfigLoader {
       }
    }
 
-   resetOnError(err) {
+   resetOnError() {
       for (const k of Object.keys(this.loaded_urls)) {
          localStorage.removeItem(k);
          console.log(`storage with key ${k} removed`);
       }
-      throw err
    }
 }
 
@@ -132,7 +134,7 @@ class ConfigBuilder {
       // console.log(replacements_by_priority_level)
 
       let replacements = this.union_replacements_by_level(replacements_by_priority_level);
-      console.log(replacements)
+      // console.log(replacements)
       return replacements;
    }
 
@@ -319,29 +321,14 @@ class ConfigBuilder {
 
 }
 
-function run_mutations(mutations, replacements) {
-   try {
-      mutations.forEach(mutation => {
-         if (mutation.type === "childList") {
-            mutation.addedNodes.forEach(node => {
-               replaceText(node, replacements);
-            });
-         }
-      });
-   } catch (err) {
-      // wrong config
-      config_loader.resetOnError(err);
-   }
-}
-
-function replaceText(node, replacements) {
+function replaceText(node, replacements, replaced_nodes) {
    // catch script from google analitics here
    // node.type: 'application/json'
    // type for other nodes not defined
    if (node.type && node.type === 'application/json') return;
    switch (node.nodeType) {
       case Node.ELEMENT_NODE:
-         node.childNodes.forEach(n => replaceText(n, replacements));
+         node.childNodes.forEach(n => replaceText(n, replacements, replaced_nodes));
          break;
       case Node.TEXT_NODE: {
          let text = node.textContent;
@@ -350,12 +337,14 @@ function replaceText(node, replacements) {
          let new_text = make_replacements(text, replacements);
          if (text != new_text) {
             node.textContent = new_text;
+            if (replaced_nodes.has(node)) break;
+            replaced_nodes.set(node, text);
             // console.log(new_text);
          }
          break;
       }
       case Node.DOCUMENT_NODE:
-         node.childNodes.forEach(n => replaceText(n, replacements));
+         node.childNodes.forEach(n => replaceText(n, replacements, replaced_nodes));
    }
 }
 
@@ -479,74 +468,114 @@ function t2s(textStr) {
    return new_textStr;
 }
 
-function remember_scroll_pos() {
-   if (script_initiate_reload) return;
-   localStorage.setItem("yPos", window.scrollY);
-   localStorage.setItem("last_url", window.location.href);
-}
-
-async function restore_scroll_pos() {
-   // if (window.scrollY > 0) return;
-   let prev_url = localStorage.getItem("last_url", window.location.href);
-   if (!prev_url || prev_url !== window.location.href) return;
-   let yPos = localStorage.getItem("yPos", window.scrollY);
-   if (!yPos || yPos == 0) return;
-   window.scrollTo(0, yPos);
-}
-
-async function main() {
-   let replacements = await promised_replacements
-      .catch(err => { config_loader.resetOnError(err) });
-   // console.log(`main started in: ${Date.now() - script_start}`);
-
-   let d = config.delay_scroll_on_reload;
-   if (d && d >= 0) {
-      setTimeout(restore_scroll_pos, config.delay_scroll_on_reload);
-   }
-   console.log("config loaded!");
-   if (!replacements || replacements.size == 0) {
-      console.log("no replacements for this site!");
-      return;
+class ClickEventDetector {
+   constructor(max_clicks, max_time_ms, callback) {
+      this.max_clicks = max_clicks;
+      this.max_time_ms = max_time_ms;
+      this.s = [];
+      this.callback = callback;
    }
 
-   observer = new MutationObserver((mutations) => { run_mutations(mutations, replacements); });
-   observer.observe(document.body, { childList: true, subtree: true });
+   detect_click(event) {
+      let cur_time = Date.now();
+      this.s = this.s.filter(time => cur_time - time < this.max_time_ms);
+      this.s.push(cur_time);
+      if (this.s.length < this.max_clicks) return;
+      this.s = [];
+      this.callback()
+   }
+}
 
-   try {
-      replaceText(document.body, replacements);
-   } catch (err) {
-      config_loader.resetOnError(err);
+class ScriptRunner {
+   constructor() {
+      this.config_loader = new ConfigLoader();
+      this.builder = new ConfigBuilder(this.config_loader);
+      this.click_event_detector = new ClickEventDetector(
+         config.reload_config_event.max_clicks,
+         config.reload_config_event.max_time_ms,
+         () => { this.forse_update_replacements(); }
+      );
+      this.replaced_nodes = new Map();
+
+      this.replacements = null;
+      this.promised_replacements = null
+      this.observer = null
    }
 
-   // earlier we restore jsons from browser storage for fastloading
-   if (!config_loader.is_restored) return;
-   // if they restored - probably they changed
-   config_loader.mode = loader_modes.norestore;
-   await builder.build(config.json_url)
-      .catch(err => { config_loader.resetOnError(err) });
-   if (!config_loader.is_data_updated) return;
-   script_initiate_reload = true;
-   // if jsons changed - better reload page to start everything again
-   location.reload();
+   run_mutations(mutations) {
+      mutations.forEach(mutation => {
+         if (mutation.type === "childList") {
+            mutation.addedNodes.forEach(node => {
+               this.replace(node);
+            });
+         }
+      });
+   }
+
+   preLoad() {
+      this.promised_replacements = this.builder.build(config.json_url);
+      this.observer = new MutationObserver(
+         mutations => this.run_mutations(mutations)
+      );
+   }
+
+   async onLoad() {
+      this.replacements = await this.promised_replacements
+         .catch(err => { this.onError(err) });
+
+      // console.log(`main started in: ${Date.now() - script_start}`);
+
+      console.log("config loaded!");
+      if (!this.replacements || this.replacements.size == 0) {
+         console.log("no replacements for this site!");
+         return;
+      }
+
+      this.observer.observe(document.body, { childList: true, subtree: true });
+
+      this.replace();
+
+      document.body.addEventListener('click',
+         event => this.click_event_detector.detect_click(event));
+
+      if (!this.config_loader.is_restored) return;
+      this.forse_update_replacements();
+   }
+
+   replace(node = document.body) {
+      try {
+         replaceText(node, this.replacements, this.replaced_nodes);
+      } catch (err) {
+         this.onError(err);
+      }
+   }
+
+   revert_nodes() {
+      for (let [node, text] of this.replaced_nodes) {
+         node.textContent = text;
+      }
+   }
+
+   async forse_update_replacements() {
+      this.config_loader.mode = loader_modes.norestore;
+      this.replacements = await this.builder.build(config.json_url)
+         .catch(err => { this.onError(err) });
+      // console.log('config not updated');
+      if (!this.config_loader.is_data_updated) return;
+      this.revert_nodes();
+      this.replace();
+   }
+
+   onError(err) {
+      this.config_loader.resetOnError()
+      throw err
+   }
+
 }
 
-let config_loader = new ConfigLoader();
-let builder = new ConfigBuilder(config_loader);
-let promised_replacements = builder.build(config.json_url);
-let observer = null;
-let script_initiate_reload = false;
-
-function prevent_memory_leak() {
-   config_loader = null;
-   builder = null;
-   promised_replacements = null;
-   observer = null;
-   script_initiate_reload = null;
-}
+let script_runner = new ScriptRunner();
+script_runner.preLoad();
 
 document.readyState !== 'loading'
-   ? main()
-   : addEventListener("DOMContentLoaded", main);
-
-addEventListener("beforeunload", prevent_memory_leak);
-addEventListener("beforeunload", remember_scroll_pos);
+   ? script_runner.onLoad()
+   : addEventListener("DOMContentLoaded", () => { script_runner.onLoad(); });

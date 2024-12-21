@@ -1,3 +1,4 @@
+
 ## Install
 Just copy replacement.js to Tampermonkey / Userscripts.<br />
 Change url to your config.<br />
@@ -13,11 +14,14 @@ Here is small js script for word replacements.
 # Script Config
 it's small config at the beginning of the scirpt
 ```js
-const  config  = {
-	"json_url":  "https://api.npoint.io/5ef4bedc09296d71cf5a",
-	"traditional_to_simple_chinese":  true,
-	"delay_scroll_on_reload":  -1,
-	"default_priority_level":  1,
+const config = {
+   "json_url": "https://api.npoint.io/adca32df1622919ca5bd",
+   "traditional_to_simple_chinese": true,
+   "default_priority_level": 1,
+   "reload_config_event": {
+      "max_clicks": 10,
+      "max_time_ms": 3000
+   }
 };
 ```
 ### json_url
@@ -32,10 +36,18 @@ Where you can store json?
 `true`, `false`<br />
 I readed chinese book with  translation dubbing. I saw as original, as translated text.<br />
 So I added option to convert hard readable hieroglyphs to there simple version
-### delay_scroll_on_reload
-Delay for restoring page position in ms after reloading. If `< 0` - not working.<br />
-By default browsers restore position. Try it, if smth gone wrong<br />
-`3000` - 3 sec
+### reload_config_event
+```json
+   "reload_config_event": {
+      "max_clicks": 10,
+      "max_time_ms": 3000
+   }
+```
+Here are settings for reloading json config.<br />
+As example - you reading text, made replacement in config - and want to check result, without reloading page.<br />
+You should click `max_clicks` times in `max_time_ms` time at any place of page.<br />
+10 times in 3 sec by default.<br />
+Script would reload config, swap text back to original state and apply new replacements.
 ## default_priority_level
 optional, useful if you're experimenting with the order of substitutions<br />
 read about `__level` in json
@@ -327,8 +339,8 @@ let arr = [
 ```
 Autoorder, checking same key - works only on the same lvl<br />
 Finally they squashed in one array, ordered by levels
-```js
-arr = [
+```
+[
 	'a1','a2',
 	...,
 	'b1','b2',
@@ -341,7 +353,7 @@ arr = [
 **Inheriting**
 Level is inherited by child nodes.<br />
 Here is example.
-```json
+```
 {
 	"a1": "a2", // default level 1
 	"a": {
