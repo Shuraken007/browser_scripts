@@ -28,20 +28,34 @@ const script_start = Date.now();
 
 const loader_modes = {
    fast_load: 'restore_json_data_from_localStorage',
-   forse_load: 'always_load_by_url',
+   force_load: 'always_load_by_url',
 };
 
 class ConfigLoader {
    constructor() {
-      this.mode = loader_modes.fast_load;
+      this._mode = loader_modes.fast_load;
       this.loaded_urls = {};
       this.is_data_updated = false;
       this.is_restored = false;
    }
 
+   set_mode(mode) {
+      let is_known_mode = false;
+      for (const key of Object.keys(loader_modes)) {
+         if (loader_modes[key] === mode) {
+            is_known_mode = true;
+            break;
+         }
+      }
+      if (!is_known_mode) {
+         throw new Error(`unknown ConfigLoader mode ${mode}`);
+      }
+      this._mode = mode
+   }
+
    async load(url) {
       let data;
-      if (this.mode == loader_modes.fast_load) {
+      if (this._mode == loader_modes.fast_load) {
          data = await localStorage.getItem(url);
       }
       if (data) {
@@ -54,7 +68,7 @@ class ConfigLoader {
       // console.log(data);
       localStorage.setItem(url, data);
 
-      if (!this.mode === loader_modes.force_load) return data;
+      if (!this._mode === loader_modes.force_load) return data;
       if (!this.loaded_urls[url]) return data;
       if (this.loaded_urls[url] !== data) {
          console.log('config updated');
@@ -209,6 +223,7 @@ class ConfigBuilder {
             data = await this.config_loader.load(include);
             data = JSON.parse(data);
          } catch (err) {
+            // ignore error on invalid included json
             localStorage.removeItem(include);
             console.log(`error on loading url include ${include}`)
             return;
@@ -489,6 +504,7 @@ class ClickEventDetector {
 class ScriptRunner {
    constructor() {
       this.config_loader = new ConfigLoader();
+      this.config_loader.set_mode(loader_modes.fast_load);
       this.builder = new ConfigBuilder(this.config_loader);
       this.click_event_detector = new ClickEventDetector(
          config.reload_config_event.max_clicks,
@@ -557,7 +573,7 @@ class ScriptRunner {
    }
 
    async forse_update_replacements() {
-      this.config_loader.mode = loader_modes.force_load;
+      this.config_loader.set_mode(loader_modes.force_load);
       this.replacements = await this.builder.build(config.json_url)
          .catch(err => { this.onError(err) });
       // console.log('config not updated');
