@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Replacer
 // @namespace    http://tampermonkey.net/
-// @version      2.2
+// @version      2.3
 // @license MIT
 // @description  replace words
 // @author       Shuraken007
