@@ -27,13 +27,13 @@ const config = {
 const script_start = Date.now();
 
 const loader_modes = {
-   restore: 'restore_json_data_from_localStorage',
-   norestore: 'always_load',
+   fast_load: 'restore_json_data_from_localStorage',
+   forse_load: 'always_load_by_url',
 };
 
 class ConfigLoader {
    constructor() {
-      this.mode = loader_modes.restore;
+      this.mode = loader_modes.fast_load;
       this.loaded_urls = {};
       this.is_data_updated = false;
       this.is_restored = false;
@@ -41,7 +41,7 @@ class ConfigLoader {
 
    async load(url) {
       let data;
-      if (this.mode == loader_modes.restore) {
+      if (this.mode == loader_modes.fast_load) {
          data = await localStorage.getItem(url);
       }
       if (data) {
@@ -54,7 +54,7 @@ class ConfigLoader {
       // console.log(data);
       localStorage.setItem(url, data);
 
-      if (!this.mode === loader_modes.norestore) return data;
+      if (!this.mode === loader_modes.force_load) return data;
       if (!this.loaded_urls[url]) return data;
       if (this.loaded_urls[url] !== data) {
          console.log('config updated');
@@ -557,7 +557,7 @@ class ScriptRunner {
    }
 
    async forse_update_replacements() {
-      this.config_loader.mode = loader_modes.norestore;
+      this.config_loader.mode = loader_modes.force_load;
       this.replacements = await this.builder.build(config.json_url)
          .catch(err => { this.onError(err) });
       // console.log('config not updated');
