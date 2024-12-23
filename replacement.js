@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Replacer
 // @namespace    http://tampermonkey.net/
-// @version      2.4
+// @version      2.5
 // @license MIT
 // @description  replace words
 // @author       Shuraken007
@@ -14,13 +14,23 @@
 /* jshint esversion: 9 */
 'use strict';
 
+const known_events = {
+   config_update: "forse_update_replacements",
+   turn_on_off: "swap_on_off",
+}
+
 const config = {
    "json_url": "https://api.npoint.io/adca32df1622919ca5bd",
    "traditional_to_simple_chinese": true,
    "default_priority_level": 1,
-   "reload_config_event": {
-      "max_clicks": 10,
-      "max_time_ms": 3000
+   "binds": {
+      "click_interval": 3000,
+      "n": 3,
+      "m": 2,
+      "events": {
+         [known_events.config_update]: [4, 4, 6, 6],
+         [known_events.turn_on_off]: [6, 6, 4, 4],
+      }
    }
 };
 
@@ -31,6 +41,19 @@ const loader_modes = {
    force_load: 'always_load_by_url',
 };
 
+function validate_mode(mode) {
+   let is_known_mode = false;
+   for (const key of Object.keys(loader_modes)) {
+      if (loader_modes[key] === mode) {
+         is_known_mode = true;
+         break;
+      }
+   }
+   if (!is_known_mode) {
+      throw new Error(`unknown ConfigLoader mode ${mode}`);
+   }
+}
+
 class ConfigLoader {
    constructor() {
       this._mode = loader_modes.fast_load;
@@ -40,17 +63,8 @@ class ConfigLoader {
    }
 
    set_mode(mode) {
-      let is_known_mode = false;
-      for (const key of Object.keys(loader_modes)) {
-         if (loader_modes[key] === mode) {
-            is_known_mode = true;
-            break;
-         }
-      }
-      if (!is_known_mode) {
-         throw new Error(`unknown ConfigLoader mode ${mode}`);
-      }
-      this._mode = mode
+      validate_mode(mode);
+      this._mode = mode;
    }
 
    async load(url) {
@@ -126,15 +140,59 @@ function get_type(x) {
    return types.Unknown;
 }
 
+const ReplacementConverter = {
+   replacer: function (_, value) {
+      if (value instanceof RegExp)
+         return ("__REGEXP " + value.toString());
+      else
+         return value;
+   },
+   reviver: function (_, value) {
+      if (value.toString().indexOf("__REGEXP ") == 0) {
+         let m = value.split("__REGEXP ")[1]
+         return getRegFromString(m, false)
+      } else
+         return value;
+   }
+}
+
+const storage_replacements = 'saved_replacements';
 class ConfigBuilder {
    constructor(config_loader) {
       this.url = window.location.href;
       this.config_loader = config_loader;
+      this._mode = loader_modes.fast_load;
+      this.is_restored = false;
    }
 
-   async build(url) {
+   set_mode(mode) {
+      validate_mode(mode);
+      this._mode = mode;
+   }
+
+   save(replacements) {
+      let replacements_as_str = JSON.stringify(replacements, ReplacementConverter.replacer)
+      localStorage.setItem(storage_replacements, replacements_as_str);
+   }
+
+   async get(url) {
+      this.is_restored = false
+      if (this._mode === loader_modes.fast_load) {
+         let data = await localStorage.getItem(storage_replacements);
+         if (data) {
+            let replacements = JSON.parse(data, ReplacementConverter.reviver)
+            this.is_restored = true
+            return replacements
+         }
+      }
+
       let data = await this.config_loader.load(url);
-      var json = JSON.parse(data);
+      let json_data = JSON.parse(data);
+
+      return this.build(json_data);
+   }
+
+   async build(json) {
       let known_nodes_map = new Map();
       this.collect_names(json, known_nodes_map);
 
@@ -334,6 +392,11 @@ class ConfigBuilder {
       return replacements;
    }
 
+   resetOnError() {
+      console.log('removed storage_replacements')
+      localStorage.removeItem(storage_replacements);
+   }
+
 }
 
 function replaceText(node, replacements, replaced_nodes) {
@@ -402,12 +465,12 @@ function prepareRegex(string) {
    return string;
 }
 
-function getRegFromString(string) {
+function getRegFromString(string, is_global_required) {
    var a = string.split("/");
    let modifiers = a.pop();
    a.shift();
    let pattern = a.join("/");
-   if (!modifiers.includes('g')) {
+   if (is_global_required && !modifiers.includes('g')) {
       modifiers += 'g';
    }
    // console.log(`pattern: ${pattern}, modifiers: ${modifiers}`)
@@ -421,7 +484,7 @@ function tokenToRegex(string, is_prepared = false) {
    }
    if (string.match(rIsRegexp)) {
       // console.log(`user_regexp: ${string}`)
-      return getRegFromString(string);
+      return getRegFromString(string, true);
    }
    if (is_prepared) {
       string = prepareRegex(string);
@@ -483,33 +546,99 @@ function t2s(textStr) {
    return new_textStr;
 }
 
-class ClickEventDetector {
-   constructor(max_clicks, max_time_ms, callback) {
-      this.max_clicks = max_clicks;
-      this.max_time_ms = max_time_ms;
+/* how ClickDetector works:
+   it get n, m values from config
+   and splited screen on n*m rectangles
+   each rectangle get it's own number
+   left-> right, up->down
+
+   n = 3, m = 2:
+
+   -------------
+   | 1 | 2 | 3 |
+   |---|---|---|
+   | 4 | 5 | 6 |
+   -------------
+
+   you setup click_interval
+   and any chain of blocks:
+   [1, 3, 6, 4] or [1, 1, 2, 2, 5, 5, 4, 4]
+   if last clicks are same as you expected in chain: 
+      event fired
+*/
+
+class ClickDetector {
+   constructor(n, m, click_interval, config) {
+      this.n = n;
+      this.m = m;
+      this.click_interval = click_interval;
       this.s = [];
-      this.callback = callback;
+      this.config = config
    }
 
-   detect_click(event) {
+   get_index(event) {
+      let x = event.clientX;
+      let y = event.clientY;
+      let w = window.innerWidth;
+      let h = window.innerHeight;
+      let i = ~~(x / ~~(w / this.n));
+      let j = ~~(y / ~~(h / this.m));
+      return j * this.n + i;
+   }
+
+   clean_array(min_val) {
+      this.s = this.s.filter(x => x[0] >= min_val)
+   }
+
+   on_click(event) {
+      // console.log(event)
+      let index = this.get_index(event);
       let cur_time = Date.now();
-      this.s = this.s.filter(time => cur_time - time < this.max_time_ms);
-      this.s.push(cur_time);
-      if (this.s.length < this.max_clicks) return;
-      this.s = [];
-      this.callback()
+      this.clean_array(cur_time - this.click_interval)
+      this.s.push([cur_time, index]);
+
+      for (const [indexes, callback] of this.config) {
+         if (indexes.length > this.s.length) continue;
+         if (!this.is_event_fired(indexes)) continue;
+         // console.log('fired');
+         this.s = [];
+         callback()
+         return
+      }
+   }
+
+   is_event_fired(indexes) {
+      let l_diff = this.s.length - indexes.length
+      let prev_val;
+      for (let i = 0; i < indexes.length; i++) {
+         let expected_index = indexes[i] - 1;
+         let got_index = this.s[l_diff + i][1]
+         if (expected_index != got_index) return false;
+
+         let cur_val = this.s[l_diff + i][0];
+         if (prev_val && cur_val < prev_val) return false;
+         prev_val = cur_val
+      }
+
+      return true;
    }
 }
 
 class ScriptRunner {
    constructor() {
+      this.on = true;
+
       this.config_loader = new ConfigLoader();
-      this.config_loader.set_mode(loader_modes.fast_load);
       this.builder = new ConfigBuilder(this.config_loader);
-      this.click_event_detector = new ClickEventDetector(
-         config.reload_config_event.max_clicks,
-         config.reload_config_event.max_time_ms,
-         () => { this.forse_update_replacements(); }
+
+      this.config_loader.set_mode(loader_modes.fast_load);
+      this.builder.set_mode(loader_modes.fast_load);
+
+      this.click_detector = new ClickDetector(
+         config.binds.n,
+         config.binds.m,
+         config.binds.click_interval,
+         this.prepare_event_config(config.binds.events)
       );
       this.replaced_nodes = new Map();
 
@@ -518,7 +647,17 @@ class ScriptRunner {
       this.observer = null
    }
 
+   prepare_event_config(events) {
+      let event_config = []
+      for (const [callback_name, indexes] of Object.entries(events)) {
+         let callback = () => { this[callback_name]() }
+         event_config.push([indexes, callback])
+      }
+      return event_config
+   }
+
    run_mutations(mutations) {
+      if (!this.on) return;
       mutations.forEach(mutation => {
          if (mutation.type === "childList") {
             mutation.addedNodes.forEach(node => {
@@ -529,7 +668,7 @@ class ScriptRunner {
    }
 
    preLoad() {
-      this.promised_replacements = this.builder.build(config.json_url);
+      this.promised_replacements = this.builder.get(config.json_url);
       this.observer = new MutationObserver(
          mutations => this.run_mutations(mutations)
       );
@@ -547,18 +686,23 @@ class ScriptRunner {
          return;
       }
 
+      if (!this.builder.is_restored) {
+         this.builder.save(this.replacements);
+      }
+
       this.observer.observe(document.body, { childList: true, subtree: true });
 
       this.replace();
 
       document.body.addEventListener('click',
-         event => this.click_event_detector.detect_click(event));
+         event => this.click_detector.on_click(event));
 
-      if (!this.config_loader.is_restored) return;
+      if (!this.builder.is_restored && !this.config_loader.is_restored) return;
       this.forse_update_replacements();
    }
 
    replace(node = document.body) {
+      if (!this.on) return;
       try {
          replaceText(node, this.replacements, this.replaced_nodes);
       } catch (err) {
@@ -567,23 +711,38 @@ class ScriptRunner {
    }
 
    revert_nodes() {
+      if (!this.on) return;
       for (let [node, text] of this.replaced_nodes) {
          node.textContent = text;
       }
    }
 
+   swap_on_off() {
+      if (this.on) {
+         this.revert_nodes()
+         this.on = false
+      } else {
+         this.on = true
+         this.replace()
+      }
+   }
+
    async forse_update_replacements() {
       this.config_loader.set_mode(loader_modes.force_load);
-      this.replacements = await this.builder.build(config.json_url)
+      this.builder.set_mode(loader_modes.force_load);
+
+      this.replacements = await this.builder.get(config.json_url)
          .catch(err => { this.onError(err) });
       // console.log('config not updated');
       if (!this.config_loader.is_data_updated) return;
+      this.builder.save(this.replacements);
       this.revert_nodes();
       this.replace();
    }
 
    onError(err) {
       this.config_loader.resetOnError()
+      this.builder.resetOnError()
       throw err
    }
 

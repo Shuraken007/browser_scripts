@@ -18,15 +18,19 @@ const config = {
    "json_url": "https://api.npoint.io/adca32df1622919ca5bd",
    "traditional_to_simple_chinese": true,
    "default_priority_level": 1,
-   "reload_config_event": {
-      "max_clicks": 10,
-      "max_time_ms": 3000
+   "binds": {
+      "click_interval": 3000,
+      "n": 3,
+      "m": 2,
+      "events": {
+         [known_events.config_update]: [4, 4, 6, 6],
+         [known_events.turn_on_off]: [6, 6, 4, 4],
+      }
    }
 };
 ```
 ### json_url
 url, with your config
-- `traditional_to_simple_chinese`: `true`/`false`
 
 Where you can store json?
 -  [https://www.npoint.io/]
@@ -36,21 +40,62 @@ Where you can store json?
 `true`, `false`<br />
 I readed chinese book with  translation dubbing. I saw as original, as translated text.<br />
 So I added option to convert hard readable hieroglyphs to there simple version
-### reload_config_event
-```json
-   "reload_config_event": {
-      "max_clicks": 10,
-      "max_time_ms": 3000
-   }
-```
-Here are settings for reloading json config.<br />
-As example - you reading text, made replacement in config - and want to check result, without reloading page.<br />
-You should click `max_clicks` times in `max_time_ms` time at any place of page.<br />
-10 times in 3 sec by default.<br />
-Script would reload config, swap text back to original state and apply new replacements.
-## default_priority_level
+
+### default_priority_level
 optional, useful if you're experimenting with the order of substitutions<br />
 read about `__level` in json
+
+### binds
+```json
+const known_events = {
+   config_update: "forse_update_replacements",
+   turn_on_off: "swap_on_off",
+}
+// ....
+   "binds": {
+      "click_interval": 3000,
+      "n": 3,
+      "m": 2,
+      "events": {
+         [known_events.config_update]: [4, 4, 6, 6],
+         [known_events.turn_on_off]: [6, 6, 4, 4],
+      }
+   }
+```
+Binds - settings - where and how click to run some options.<br />
+I want to work them as on PC, as on IOS - and don't want to add GUI buttons.<br />
+<br />
+Idea is following:
+- Screen splitted on **n** x **m** rectangles
+- each rectangle get it's own number 1, ... n x m
+- from left-> right, from up->down<br />
+
+Example for n=3, m=2<br />
+```text
+   -------------
+   | 1 | 2 | 3 |
+   |---|---|---|
+   | 4 | 5 | 6 |
+   -------------
+```
+
+Next step is to set option - what to do and order - which block clicks expected.
+<br />
+#### click_interval
+It's interval, where you have to do all clicks.
+`"click_interval": 3000` - 3 seconds
+<br />
+#### indexes
+`[4, 4, 6, 6]`<br />
+Expected order of clicks. <br />
+At this case - you should tap twice in left bottom screen <br />
+And after that - twice in right bottom.
+<br />
+#### known options
+- config_update - script would load json config again and update <br />replacements (If you change config and don't want to reload page)
+- turn_on_off 
+	<br />**off** - script discard changes and stop works on text updates, 
+	<br />**on** - works again, usefull if you want to check original values before script.
 
 # Json Config
 config looks this way:
