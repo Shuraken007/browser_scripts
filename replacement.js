@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Replacer
+// @name         Word Text Replace
 // @namespace    http://tampermonkey.net/
 // @version      2.5
 // @license MIT
