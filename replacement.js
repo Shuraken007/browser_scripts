@@ -418,7 +418,7 @@ function replaceText(node, replacements, replaced_nodes) {
             node.textContent = new_text;
             if (replaced_nodes.has(node)) break;
             replaced_nodes.set(node, text);
-            // console.log(new_text);
+            // console.log(`${text}->${new_text}`);
          }
          break;
       }
@@ -680,7 +680,6 @@ class ScriptRunner {
          .catch(err => { this.onError(err) });
 
       // console.log(`main started in: ${Date.now() - script_start}`);
-
       console.log("config loaded!");
       if (!this.replacements || this.replacements.size == 0) {
          console.log("no replacements for this site!");
