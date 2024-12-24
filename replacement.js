@@ -68,27 +68,22 @@ class ConfigLoader {
       this._mode = mode;
    }
 
+   async fast_load(url) {
+      if (this._mode != loader_modes.fast_load) return null;
+      let data = await localStorage.getItem(url);
+      if (!data) return null;
+      this.is_restored = true
+      return data;
+   }
+
    async load(url) {
-      let data;
-      if (this._mode == loader_modes.fast_load) {
-         data = await localStorage.getItem(url);
-      }
-      if (data) {
-         this.is_restored = true
-         this.loaded_urls[url] = data;
-         return data
+      let data = await this.fast_load(url);
+      if (!data) {
+         data = await ConfigLoader.loadFile(url);
+         localStorage.setItem(url, data);
       }
 
-      data = await ConfigLoader.loadFile(url);
-      // console.log(data);
-      localStorage.setItem(url, data);
-
-      if (!this._mode === loader_modes.force_load) return data;
-      if (!this.loaded_urls[url]) return data;
-      if (this.loaded_urls[url] !== data) {
-         console.log('config updated');
-         this.is_data_updated = true;
-      }
+      this.loaded_urls[url] = true;
       return data
    }
 
@@ -733,9 +728,8 @@ class ScriptRunner {
 
       this.replacements = await this.builder.get(config.json_url)
          .catch(err => { this.onError(err) });
-      // console.log('config not updated');
-      if (!this.config_loader.is_data_updated) return;
       this.builder.save(this.replacements);
+
       this.revert_nodes();
       this.replace();
    }
