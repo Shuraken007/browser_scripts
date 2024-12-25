@@ -507,12 +507,15 @@ function replaceAllRespectSpaces(text, re, replacement) {
       re = new RegExp(re.source, re.flags.replace('g', ''));
    }
    var match;
+   let i = 0;
    while (match = re.exec(text)) {
       if (is_space_required(text, match.index)) {
          text = text.replace(match, " " + replacement);
       } else {
          text = text.replace(match, replacement);
       }
+      i++;
+      if (i > 1000) { throw Error(`re ${re} exceeded 1000 iterations on ${text}`) }
    }
    return text;
 }
