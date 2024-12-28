@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Word Text Replace
 // @namespace    http://tampermonkey.net/
-// @version      2.5
+// @version      2.6
 // @license MIT
 // @description  Replace words. Store replacements in flexible json (loaded by url). Share config with other, best for reading books with translate. Traditional to simplified chinese option.
 // @description:ru  Замена слов. Храните замены в гибком json (грузится по url). Делитель конфигом с другими, хорошо для чтения книг с переводчиком. Traditional to simplified chinese option.
@@ -500,7 +500,7 @@ function is_space_required(text, index) {
 }
 
 function replaceAllRespectSpaces(text, re, replacement) {
-   if (!isLetter(replacement.charAt(0))) { return text; }
+   // if (!isLetter(replacement.charAt(0))) { return text; }
    if (typeof re === 'string' || re instanceof String) {
       re = new RegExp(re);
    } else if (re instanceof RegExp && re.global) {
