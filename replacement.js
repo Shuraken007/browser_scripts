@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Word Text Replace
 // @namespace    http://tampermonkey.net/
-// @version      2.7
+// @version      2.8
 // @license MIT
 // @description  Replace words. Store replacements in flexible json (loaded by url). Share config with other, best for reading books with translate. Traditional to simplified chinese option.
 // @description:ru  Замена слов. Храните замены в гибком json (грузится по url). Делитель конфигом с другими, хорошо для чтения книг с переводчиком. Traditional to simplified chinese option.
@@ -451,13 +451,17 @@ function make_replacements(text, replacements) {
 
 // prepareRegex by JoeSimmons
 // used to take a string and ready it for use in new RegExp()
-function prepareRegex(string) {
+function prepareRegex(string, is_star_special = false) {
    // escape: []^&$.()?/\+{}|
    string = string.replace(/([\[\]\^\&\$\.\(\)\?\/\\\+\{\}\|])/g, '\\$1');
-   // '*' -> '[^ ]*', but '\*' -> '*'
-   string = string.replace(/\\?\*/g, function (fullMatch) {
-      return fullMatch === '\\*' ? '*' : '[^ ]*';
-   });
+   if (!is_star_special) {
+      string = string.replace('*', '\\*')
+   } else {
+      // '*' -> '[^ ]*', but '\*' -> '*'
+      string = string.replace(/\\?\*/g, function (fullMatch) {
+         return fullMatch === '\\*' ? '*' : '[^ ]*';
+      });
+   }
    return string;
 }
 
@@ -483,7 +487,7 @@ function tokenToRegex(string, is_prepared = false) {
       return getRegFromString(string, true);
    }
    if (is_prepared) {
-      string = prepareRegex(string);
+      string = prepareRegex(string, true);
       return new RegExp(string);
    }
    return string;
@@ -501,8 +505,8 @@ function is_space_required(text, index) {
 
 function replaceAllRespectSpaces(text, re, replacement) {
    // if (!isLetter(replacement.charAt(0))) { return text; }
-   if (typeof re === 'string' || re instanceof String) {
-      re = new RegExp(re);
+   if (get_type(re) === types.String) {
+      re = new RegExp(prepareRegex(re));
    } else if (re instanceof RegExp && re.global) {
       re = new RegExp(re.source, re.flags.replace('g', ''));
    }
