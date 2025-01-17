@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Word Text Replace
 // @namespace    http://tampermonkey.net/
-// @version      2.8
+// @version      2.9
 // @license MIT
 // @description  Replace words. Store replacements in flexible json (loaded by url). Share config with other, best for reading books with translate. Traditional to simplified chinese option.
 // @description:ru  Замена слов. Храните замены в гибком json (грузится по url). Делитель конфигом с другими, хорошо для чтения книг с переводчиком. Traditional to simplified chinese option.
@@ -30,7 +30,7 @@ const config = {
       "m": 2,
       "events": {
          [known_events.config_update]: [4, 4, 6, 6],
-         [known_events.turn_on_off]: [6, 6, 4, 4],
+         [known_events.turn_on_off]: [1, 1, 3, 3],
       }
    }
 };
@@ -59,7 +59,6 @@ class ConfigLoader {
    constructor() {
       this._mode = loader_modes.fast_load;
       this.loaded_urls = {};
-      this.is_data_updated = false;
       this.is_restored = false;
    }
 
@@ -455,7 +454,7 @@ function prepareRegex(string, is_star_special = false) {
    // escape: []^&$.()?/\+{}|
    string = string.replace(/([\[\]\^\&\$\.\(\)\?\/\\\+\{\}\|])/g, '\\$1');
    if (!is_star_special) {
-      string = string.replace('*', '\\*')
+      string = string.replaceAll('*', '\\*')
    } else {
       // '*' -> '[^ ]*', but '\*' -> '*'
       string = string.replace(/\\?\*/g, function (fullMatch) {
