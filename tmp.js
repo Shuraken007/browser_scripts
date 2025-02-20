@@ -225,6 +225,8 @@
             if (!url_token.test(this.url)) continue;
             return true;
          }
+         console.log('urls not passed:')
+         console.log(pattern_arr)
          return false;
       }
 
