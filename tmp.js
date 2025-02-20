@@ -6,7 +6,8 @@
 // @description  Replace words. Store replacements in flexible json (loaded by url). Share config with other, best for reading books with translate. Traditional to simplified chinese option.
 // @description:ru  Замена слов. Храните замены в гибком json (грузится по url). Делитель конфигом с другими, хорошо для чтения книг с переводчиком. Traditional to simplified chinese option.
 // @author       Shuraken007
-// @include https://tw.wa01.com/novel/pagea/lunhuileyuan-nayizhiwenzi_*
+// @include https://tw.wa01.com/*
+// @include https://ranobelib*
 // ==/UserScript==
 
 /* jshint esversion: 9 */
