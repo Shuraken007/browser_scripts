@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Word Text Replace
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @license MIT
 // @description  Replace words. Store replacements in flexible json (loaded by url). Share config with other, best for reading books with translate. Traditional to simplified chinese option.
 // @description:ru  Замена слов. Храните замены в гибком json (грузится по url). Делитель конфигом с другими, хорошо для чтения книг с переводчиком. Traditional to simplified chinese option.
