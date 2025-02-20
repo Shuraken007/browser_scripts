@@ -1,13 +1,12 @@
 // ==UserScript==
 // @name         Word Text Replace
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @license MIT
 // @description  Replace words. Store replacements in flexible json (loaded by url). Share config with other, best for reading books with translate. Traditional to simplified chinese option.
 // @description:ru  Замена слов. Храните замены в гибком json (грузится по url). Делитель конфигом с другими, хорошо для чтения книг с переводчиком. Traditional to simplified chinese option.
 // @author       Shuraken007
-// @include https://*/*
-// @include http://*/*
+// @include https://tw.wa01.com/novel/pagea/lunhuileyuan-nayizhiwenzi_3727.html
 // ==/UserScript==
 
 /* jshint esversion: 9 */
@@ -271,12 +270,9 @@
          if (this.validate_include(include, known_nodes_map, root)) {
             data = known_nodes_map.get(include);
          } else if (this.isValidHttpUrl(include)) {
-            console.log(`founded ${include}`)
             try {
                data = await this.config_loader.load(include);
                data = JSON.parse(data);
-               console.log('get data')
-               console.log(data)
             } catch (err) {
                // ignore error on invalid included json
                localStorage.removeItem(include);
@@ -300,9 +296,9 @@
          }
          let includes = node[known_keys.include];
          if (includes) {
+            console.log(`include`)
+            console.log(includes)
             for (const [node_name, include] of Object.entries(includes)) {
-               console.log(`name_include: ${node_name}`)
-               console.log(include)
                await this.add_include(node_name, include, known_nodes_map, node);
             }
          }
@@ -312,6 +308,7 @@
             if (val_type == types.Array) {
                this.add_random_entity(k, v, collection_by_lvl, priority_lvl);
             } else if (val_type == types.Dict) {
+               console.log(`go ${k}`)
                await this.collect_replacements(v, collection_by_lvl, known_nodes_map, priority_lvl, is_matched);
             } else if (val_type === types.String) {
                this.add_basic_entity(k, v, collection_by_lvl, priority_lvl);
