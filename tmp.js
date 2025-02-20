@@ -273,9 +273,12 @@
          if (this.validate_include(include, known_nodes_map, root)) {
             data = known_nodes_map.get(include);
          } else if (this.isValidHttpUrl(include)) {
+            console.log(`founded ${include}`)
             try {
                data = await this.config_loader.load(include);
                data = JSON.parse(data);
+               console.log('get data')
+               console.log(data)
             } catch (err) {
                // ignore error on invalid included json
                localStorage.removeItem(include);
