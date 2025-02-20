@@ -301,6 +301,7 @@
          let includes = node[known_keys.include];
          if (includes) {
             for (const [node_name, include] of Object.entries(includes)) {
+               console.log(node_name, include)
                await this.add_include(node_name, include, known_nodes_map, node);
             }
          }
