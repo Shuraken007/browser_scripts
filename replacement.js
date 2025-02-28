@@ -396,10 +396,9 @@
    }
 
    function replaceText(node, replacements, replaced_nodes, runner) {
-      // catch script from google analitics here
-      // node.type: 'application/json'
-      // type for other nodes not defined
-      if (node.type && node.type === 'application/json') return;
+      let exclude_tags = ['SCRIPT', 'STYLE']
+      if (node.tagName && exclude_tags.includes(node.tagName))
+         return
       switch (node.nodeType) {
          case Node.ELEMENT_NODE:
             node.childNodes.forEach(n => replaceText(n, replacements, replaced_nodes, runner));
@@ -409,12 +408,14 @@
             if (!text.trim()) break;
             // console.log(node.nodeType, node.nodeValue)
             let new_text = make_replacements(text, replacements);
+            if (text.includes('Erode'))
+               console.log(text)
             if (text != new_text) {
-               runner.ob_disconnect();
+               // runner.ob_disconnect();
                node.textContent = new_text;
                if (replaced_nodes.has(node)) break;
                replaced_nodes.set(node, text);
-               runner.ob_connect();
+               // runner.ob_connect();
                // console.log(`${text}->${new_text}`);
             }
             break;
@@ -515,14 +516,28 @@
       }
       var match;
       let i = 0;
-      while (match = re.exec(text)) {
+      let old_text = text;
+      while (true) {
+         match = re.exec(text)
+         if (!match) break;
+
          if (is_space_required(text, match.index)) {
             text = text.replace(match, " " + replacement);
          } else {
             text = text.replace(re, replacement);
          }
+
+         let new_part = text.substring(match.index)
+         let old_part = old_text.substring(match.index)
+         if (new_part.includes(old_part) && new_part.length > old_part.length) {
+            // console.log("recursive detected")
+            break
+         }
+
+         old_text = text
+
          i++;
-         if (i > 1000) { throw Error(`re ${re} exceeded 1000 iterations on ${text}`) }
+         if (i > 100) { throw Error(`re ${re} exceeded 100 iterations on ${text}`) }
       }
       return text;
    }
