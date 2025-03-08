@@ -1,0 +1,251 @@
+{
+   "ru->ru": {
+      "имена": {
+         "Рэндидли": "Рэнди",
+         "Рэндалл": "Рэнди",
+         "Рэндом": "Рэнди",
+         "/Похотлив[а-я]+/": "Рэнди",
+         "похотливый": "Рэнди",
+         "/п[её]сик/i": "Вульфи",
+         "Гостхаунд": [
+            "Вольфгейст",
+            "Вольф",
+            "Вольф"
+         ],
+         "Случайный Вольфгейст": "Рэнди Вольфгейст",
+         "first": {
+            "/Гонч[а-я \\-]+Призрак/": "Гостхаунд",
+            "Волчий Призрак": "Гостхаунд",
+            "Вольфгейст": "Гостхаунд",
+            "__level": 2
+         },
+         "Клэп": "Клэптрап",
+         "Торн": "Шип",
+         "/Заклятый враг/i": "Немезида",
+         "Эш": "Пепел",
+         "first": {
+            "Эша": "Пепла",
+            "__level": 2
+         },
+      },
+      "система": {
+         "Повелитель Зловещего Леса": "Владыка Леса Погибели",
+         "/Все в пепле/i": "Всё есть Прах",
+         "/Порядок Руководства/i": "Орден Лидерства",
+         "/(Орден[а-я]*) Руководства/i": "$1 Лидерства",
+         "/(Орден[а-я]*) Фиде/i": "$1 Верности",
+      },
+      "фикс": {
+         "Бегемот": "Монстр",
+         "бегемот": "монстр",
+         "/(?<=([а-я] ))(Erode Image)/": "Разрушение Образа",
+         "/(?<=([а-я] ))(All is Ash)/": "Все есть Прах",
+         "/(?<=([а-я] ))(Humanity's Torch)/": "Факел Человечества",
+         "/(?<=([а-я] ))(Warleader)/": "Военначальник",
+         "first": {
+            "меню Path": "меню Путей",
+            "__level": 2
+         },
+         "/(?<=([а-я] ))Path/": "Путь",
+         "бразц": "браз",
+         "образец": "образ",
+         "Эш": "Прах",
+         "эш": "прах",
+         "ясеня": "праха",
+         "Ясеня": "Праха",
+         "ясенев": "пепельн",
+         "Ясенев": "Пепельн",
+         "изображения": "образы",
+         "/(\\d+) долларов/": "$1",
+         "Ha!": "Хa!",
+         "HA!": "Хa!",
+         "Трахни меня": [
+            "Дерьмо",
+            "Черт побери"
+         ],
+         "фырк": [
+            "фырк",
+            "фырк",
+            "гак",
+            "хек",
+            "хряк",
+            "сплю"
+         ],
+         "Фырк": [
+            "Гак",
+            "Хек",
+            "Хряк",
+            "Сплю"
+         ],
+         "Фальсификатор": "Гравер",
+         "фальсификатор": "гравер",
+         "сеньор": "старший",
+         "Коррумпированн": "Искажённ",
+         "коррумпированн": "искажённ",
+      },
+      "__level": 3,
+   },
+   "en->en": {
+      "names": {
+         "first": {
+            "Ghosthould": "Ghosthound",
+            "__level": 0
+         },
+         "Ghosthound": "Wolfgeist",
+         "Hound": "Geist",
+         "Propagator": "Rasprostranitel",
+         "Rejt": "Redzheyt",
+         "Tziech": "Zik",
+         "Spearman": "Kopeyshik",
+         "Azriel": "Ariel", // женское имя - она
+         "/Witch (Kings?)/": "witcher $1",
+         "Auto Rach": "Avtokrat",
+         "Claptrap": "Klap",
+         "Donnyton": "Donnytown",
+         "Alicca": "Alika",
+         "Marry": "Mary",
+         "Unavoidable Pivots": "Unavoidable Support",
+         "Vye": "Vaya",
+      },
+      "orders": {
+         "Order Ducis": "Order of Leadership",
+         "Font of Guidance": "Source of the Guidance",
+         "Order Machina": "Order of Mechanica",
+         "later": {
+            "Machina": "Mechanics",
+            "__level": 2
+         },
+      },
+      "system": {
+         "Soulskill": "Skill of the soul",
+         "Bearing of a Teacher": "Support of a Teacher",
+         "War Leader": "Warleader",
+         "Grasp of the World Seed": "The Grip of the World Core",
+         "Spray Holy Sap": "Spray Holy Zhivitsa",
+         "Invigorating Call": "Invigorating Scream",
+         "Fruit of the Planting of Enmity": "Fruit of the Sazhenets of Hatred",
+         "Absolute Timing": "Perfect Calculation of Time",
+         "The Spear Advances": "Advance of the Spear",
+         "As the Sun Stills": "As the Sun Stopped",
+         "When a Shadow Departs": "When The Shadows Recede",
+         "Frigid Ash": "Inert Ash",
+         "Extinguishing Storm": "The Storm which extinguish",
+         "The Inevitable Phantom Arrives": "The Imminent 'Phantom' Coming",
+         "Ignition Bolt": "An Igniting Projectile",
+         "Verdant Nova": "Emerald Nova",
+         "Touch from Beyond": "A Touch of the Beyond",
+         "Refine": "Cleaning",
+         "Tree of Upheaval": "Tree of Shocks",
+         "Sap of Yggdrasil": "Zhivitsa of Yggdrasil",
+         "Soul Bond": "Soul Connection",
+         "Chef’s Palette": "The Chef's Sense of Smell",
+         "Nether": "Void",
+         "Flowing Momentum": "Smooth Momentum",
+         "Aether font": "Aether spring",
+         "Ashen Kata": "Ashy Kata",
+         "Nemesai": "Nemesis",
+         "Levelable Engraving": "Self-growing Engraving"
+      },
+      "fix": {
+         "__level": 0,
+         "biggest grower": "biggest beneficiary", // крупнейший производитель
+         "fire based Skills": "fire element Skills", // навыки основанные на стрельбе, но нужен-то огонь
+         "image": "obraz",
+         "Image": "Obraz",
+         "later": {
+            "obrazs": "obrazes",
+            "__level": 2
+         },
+         "mental wariness": "mental exhaustion",
+         "ash blade": "ashy blade",
+      },
+      "abbrs": {
+         "PP": "SP",
+         "/R per": "/regen per",
+         "Stam(": "Stamina(",
+         "End:": "Endurance:",
+         "Str:": "Strength:",
+         "Vit:": "Vitality:",
+         "Agi:": "Agility:",
+         "LoBW Class Skills": "Class Skills",
+         "(Un)": "(Unusual)",
+         "®": " (Rare)",
+         "(A)": "(Antient)",
+         "(L)": "(Legendary)",
+         "(Ru)": "(Runic)",
+         "(M)": "(Mythic)",
+         "(U)": "(Unique)",
+      }
+   },
+   "чистка": {
+      "tl.rulate.ru": {
+         "/П...в.д..д.л.н.н....л.йт./i": "",
+         "/.д.л.н..н....л.йт./i": "",
+         "/..R.V.D.N..N..RUL.../i": "",
+         "/п...в.д.н..н../i": "",
+         "/.l.rul....ru/i": "",
+         "/.вт...п...в.д..V..tsik/": "",
+         "П-е-р-е-в-е-д-е-н-о н-а Р.У.Л.Е.Й.Т.Е!": "",
+         "П-e-р-е-в-e-д-е-н-о н-а Р.У.Л.E.Й.Т.E!": "",
+         "перевод сделан командой Kraken": "",
+         "first": {
+            "/п...в.д.н..н...l.rul....ru/i": "",
+            "/п...в.д.н..н....л.йт./i": "",
+            "__level": 0
+         }
+      },
+      "ifreedom.su": {
+         "/а.?й.?ф.?р.?.?и.?.?д.?о.?м/i": "",
+         "firest": {
+            "/а.?й.?ф.?р.?.?и.?.?д.?о.?м.?.?с.?у.?/i": "",
+            "__level": 0
+         },
+         "Читай на ifreedom": "",
+         "Читай на": "",
+         "Свобоный | Мир | Ранобэ": "",
+         "Свободный-Мир-ранобэ": "",
+         "С в о б о д н ы й_м и р_р а н о б э": "",
+         "Сво бодный м ир ра нобэ": ""
+      },
+      "novelbin": {
+         "@@novelbin@@": ""
+      },
+      "ranobes.top": {
+         "𝖗𝘼𐌽𝐎БЕ§": "",
+         "℟ᴀℕǒ฿ËËś": "",
+         "℟𝓪𝐍𝐨ВК𝘚": "",
+         "𝖗ℕɵℕɵ฿ÊÊ": "",
+         "𝙧äN𝐁șșș": "",
+         "RἈΝÓꞖṢ": "",
+         "𝑅𝔞₦𝖔беṧ": "",
+         "ＲＡ𐌽ȰꞖȿ": "",
+         "℟𝐚nꝊÊ𐌔𐌔": "",
+         "Ɽ𝙖₦Oᛒεš": "",
+         "𝐚Ɲồ𝔟ṠṠ": "",
+         "𐌽ꝊＢƐ𝒮𐌽ꝊＢƐ𝒮": "",
+      'ɽ ƝÔ𝐀𐌱ËṢ': "",
+         "ȓ𝒶Ɲọ฿ËËË": "",
+         "𝒶𝖔𐌱𝖔𐌱Ë§": "",
+         "ṜANŎꞖě𐌔": "",
+         "𝘳ÅŊôBEṧ": "",
+         "𝐑ɴօʙɴօʙŠŠŠ": "",
+         "Ṝ𝐚ŊՕ𝐁 EŚ": "",
+         "R₳NỘＢęṢ": "",
+         "℞𝙖Ŋ𝘖ᛒƐS": "",
+         "𝖗𝓪ƝՕβƐ𝒮": "",
+         "aNȪ 𝐫𝐁Ë𝓢": "",
+         "𐌔řἈΝǒᛒЕ": "",
+         "ṞANŐＢÈŜ": "",
+         "ɌAƝỘ𝐛E": "",
+         "𝘙𝘈Ꞑ𝘖ʙᶊ": "",
+         "𝙧𝘰𝖇𝘰𝖇Ë": "",
+      },
+   },
+   "__urls": [
+      "https://ranobelib.me/ru/29100--the-legend-of-randidly-ghosthound/read/*",
+      "https://ranobe.me/ranobe192/*",
+      "https://novelbin.com/b/the-legend-of-randidly-ghosthound/*",
+      "https://www.royalroad.com/fiction/11209/the-legend-of-randidly-ghosthound/chapter/*/*",
+      "https://ranobes.top/randidly-ghosthound*"
+   ]
+}

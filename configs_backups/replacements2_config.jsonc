@@ -64,6 +64,7 @@
          "尼耶": "Nai",
          "尤尤安": "Yoyo",
          "圣诗": "Hymni",
+         "罪亚斯": "Dias",
       },
       "npc": {
          "鬼灯残月": "Zangetsu Hozuki", // Наруто - однокамерник гг, схватка в финал с Тэруми Мэй
@@ -72,6 +73,13 @@
          "哈克": "Gek", // Хек, Гек, Хак -> Гек         
          "斑克": "Banko", // Банк, Банкир -> Банко (имя собств.)
          "喔喔": "Oya",
+      },
+      "пожиратели": {
+         "沸红": "Krasnokip",
+         "/黑A/i": "Chernorod",
+         "暗阳": "Temnoyar",
+         "水晶姬": "Kristalina",
+         "太阳使徒": "Yarohval",
       },
       "輪迴樂園": "Reincarnation Paradise",
       "天启乐园": "Paradise of the Apocalypse",
@@ -125,6 +133,7 @@
       ],
       "吃屁": "eat shit",
       "阴阳人": "troll",
+      "眼线": "spy",
    },
    "Spells": {
       "野獸直感": "Beast Intuition",
@@ -272,7 +281,7 @@
       "左宗卫": "Amari Rytaro",
       "卍解": "Shikay",
       "始解": "Haigai",
-      "狛村左阵": [
+     '狛村左阵': [
          "Sajin Komamura",
          "Sajin",
          "Komamura"
@@ -309,10 +318,7 @@
       //    "刺杀": "assassination attempt", 
    },
    "Black King": {
-      "神棍": [
-         "false prophet",
-         "sectarian"
-      ],
+      "神棍": "sectarian",
       "伍弗": "Fau",
       "沙耶讬": "Sayata",
       "月之女": "Luna",
@@ -389,7 +395,7 @@
    "грабеж": {
       "晶脂": "crystall resin",
       "阴影侍者": "shadow bodyguard",
-      "容器": "deity's vesel"
+      "容器": "deity's vessel"
    },
    "s-109": {
       "收容机构": "Security Agency",
@@ -402,6 +408,9 @@
    },
    "ходячие крепости": {
       "眷族": "iron men"
+   },
+   "мир предателей": {
+      "银面": "Srebrolikaya",
    },
    "other": {
       "長刀": "sword", // длиный нож -> клинок
@@ -416,6 +425,7 @@
       "‘盟友，": "'盟友'", // Элли -> Ally / Союзник, кавычки китайские первращают в имя собственное
       "陣營": "Fraction", // лагерь -> фракция
       "公证": "evaluate",
+      "哦？": "Yes? ",
       "contract": {
          "穿梭": "contractors",
          "__urls": [
@@ -430,6 +440,7 @@
       "大陆": "continent",
       "超凡者": "superpeople",
       "[ 动手 ]": "[ Attack! ]",
+      "方纔": "刚才",
    },
    "fixes": {
       //    "/([\\p{sc=Han} ，])0([\\p{sc=Han}%])/u": "$110$2", // баг - иногда есть число 0, по смыслу 10
@@ -509,6 +520,10 @@
       "復活賽": "qualifying stage", // Пасхальный | Возрождение| Воскресный | матч  -> Отборочный этап
       "撕空惡犬": "The evil dog which howling for heavens", // описание Буптни - тэйгу
       "/(第.)环/": "$1stage", // 1-е кольцо -> 1-й этап
+      "lv.ex": "max lvl",
+      "/lv.(\\d+)/": "level $1",
+      "/Lv.(\\d+)/": "Level $1",
+      "奥义": "ultimate",
    },
    "after_translate": {
       "-->": ">>>",
@@ -577,6 +592,10 @@
       "简体": "", // верхняя панель сайт
    },
    "__urls": [
-      "https://tw.wa01.com/novel/pagea/lunhuileyuan-nayizhiwenzi_*"
+      "https://tw.wa01.com/novel/pagea/lunhuileyuan-nayizhiwenzi_*",
+      "https://www.wa01.com/novel/pagea/lunhuileyuan-nayizhiwenzi_*",
    ],
+   "__config": {
+      "simple_chinese": true
+   }
 }

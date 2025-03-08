@@ -1,0 +1,124 @@
+{
+   "word_text_replace": {
+      "chinese_map": "https://api.npoint.io/bc3aeb2a001a575ca23d",
+      "replacements": "https://api.npoint.io/adca32df1622919ca5bd",
+      "replacements_default_level": 1,
+      "binds": {
+         "click_interval": 3000,
+         "n": 3,
+         "m": 2,
+         "events": {
+            "update_replacements": [
+               4,
+               4,
+               6,
+               6
+            ],
+            "swap_on_off": [
+               1,
+               1,
+               3,
+               3
+            ],
+         }
+      }
+   },
+   "reader_mode": {
+      "config": {
+         "wallhaven_url": "https://api.npoint.io/c46ad28bf0fafa87d295",
+      },
+      "royalroad": {
+         "url": "https://www.royalroad.com/fiction/*/*/chapter/*/*",
+         "next": ".btn:contains('Next'):contains('Следующая')",
+         "remove": [
+            ".author-note-portlet",
+            ".portlet-footer",
+            ".portlet.light:contains('About the author')",
+            "h5:contains('Support')",
+            "#donate",
+            "#Chapter_Bottom_Mobile:parent():parent()",
+            ".btn:contains('Pay'):parent():parent()",
+            "div:contains('Advertisement'):not(:has(*)):parent()",
+            "#rewind-container",
+            ".scroll-to-top-tooltip",
+            ".comments-container",
+            ".scroll-to-top",
+            ".page-footer.footer"
+         ],
+         "hide": [
+            ".fic-header",
+            ".page-header",
+            ".page-prefooter",
+         ],
+         "transparent": [
+            ".page-container",
+            ".page-content-wrapper",
+            ".page-content",
+            ".background-overlay",
+            ".portlet-title",
+            ".portlet-body",
+            ".portlet-body:parent()"
+         ],
+      },
+      "ranobe.me": {
+         "url": "https://ranobe.me/ranobe*/*",
+         "next": ".read_nav_button.read_nav_button_bottom:contains('Следующая')",
+         "font": "#fontSize",
+         "remove": [
+            ".footer",
+            "#header",
+            ".MessageAloneHead",
+            ".leftbar-wrap",
+            "#site-content-left",
+            "#site-content-right",
+            "div[id^='yandex']"
+         ],
+         "bg_img_div": ".bg_image",
+      },
+      "ranobelib": {
+         "url": "https://ranobelib.me/ru/*/read/v*/*",
+         "next": ".btn:contains('Вперёд')",
+         "remove": [
+            "button:contains('реклам'):parent()",
+         ]
+      },
+      "ranobelib_main": {
+         "url": "https://ranobelib.me/ru?",
+         "is_reader": false,
+         "remove": [
+            ".section[data-home-block='slider']",
+            ".section[data-home-block='top-users']",
+         ],
+      },
+      "novelbin": {
+         "url": "https://novelbin.com/b/*/*",
+         "remove": [
+            ".navbar",
+            ".navbar-breadcrumb",
+            ".novel-title",
+            ".bg-info",
+            ".btn-warning:parent()",
+            "footer",
+            ".chr-title",
+            "html iframe",
+            ".PUBFUTURE"
+         ],
+         "next": ".btn:contains('Next')"
+      },
+      "ranobetop": {
+         "url": "https://ranobes.top/randidly-ghosthound-*/*.html",
+         "remove": [
+            ".rightside_bg",
+            ".str_right",
+            "#body_left",
+            ".breadcrumbs-panel",
+            "category.grey.ellipses",
+            ".story_tools",
+            "li:contains('We do not translate'):parent():parent()",
+            "#footer",
+            ".free-support-top",
+         ],
+         "next": ".btn.right"
+      }
+   }
+}
