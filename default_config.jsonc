@@ -1,0 +1,14 @@
+// rename to config.jsonc and fill with values
+{
+   "TELEGRAM_TOKEN": "",
+   "TELEGRAM_CHAT_ID": "",
+   "INCLUDE_HTTP": [
+      "https://ranobelib.me*",
+      "https://novelbin.com*",
+      "https://www.royalroad.com*",
+      "https://ranobes.top*",
+      "https://tw.wa01.com*",
+      "https://www.wa01.com*",
+      "https://ranobe.me*"
+   ],
+}

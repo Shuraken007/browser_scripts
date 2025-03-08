@@ -1,0 +1,23 @@
+{
+  "devDependencies": {
+    "css-loader": "^7.1.2",
+    "jquery": "^3.7.1",
+    "mocha": "^8.4.0",
+    "mocha-loader": "^5.1.5",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1"
+  },
+  "name": "browser_scripts",
+  "description": "Just copy dist/*.user.js to Tampermonkey / Userscripts.<br /> Change url to your config.<br />",
+  "version": "1.0.0",
+  "main": "webpack.config.js",
+  "type": "module",
+  "scripts": {
+    "dev": "webpack --mode development",
+    "build": "webpack --mode production",
+    "test": "mocha tests"
+  },
+  "author": "Shuraken",
+  "license": "ISC"
+}
