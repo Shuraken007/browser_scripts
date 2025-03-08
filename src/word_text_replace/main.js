@@ -193,7 +193,7 @@ class Replacer {
       this.replacements = await this.builder.run()
          .catch(err => { this.onError(err) });
       this.revert_nodes();
-      console.log(this.replacements)
+      // console.log(this.replacements)
       this.replace();
    }
 

@@ -14,7 +14,7 @@ INCLUDE_HTTP
 
 /* jshint esversion: 9 */
 {
-   const CONFIG_URL = "https://api.npoint.io/ec469b350811e7bacb82";
+   const CONFIG_URL = "WORD_TEXT_REPLACE_CONFIG_URL";
 
    SCRIPT_BODY
 };

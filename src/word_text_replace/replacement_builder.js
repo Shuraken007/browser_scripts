@@ -135,13 +135,13 @@ export class ReplacementBuilder {
    }
 
    async build_replacements(json) {
-      let known_nodes_map = new Map();
-      this.collect_names(json, known_nodes_map);
+      let known_nodes = {};
+      this.collect_names(json, known_nodes);
       let replacements_by_priority_level = {};
       await this.collect_replacements(
          json,
          replacements_by_priority_level,
-         known_nodes_map,
+         known_nodes,
          this.level
       );
       let replacements = this.union_replacements_by_level(replacements_by_priority_level);
@@ -151,15 +151,16 @@ export class ReplacementBuilder {
       return replacements;
    }
 
-   collect_names(node, known_nodes_map) {
+   collect_names(node, known_nodes) {
       for (const [k, v] of Object.entries(node)) {
-         if (known_keys.contains(k)) continue;
          if (util.get_type(v) !== util.types.Dict) continue;
-         this.collect_names(v, known_nodes_map);
-         if (known_nodes_map.has(k)) {
-            console.log(`key ${k} already added`);
+         this.collect_names(v, known_nodes);
+         if (known_nodes[k] != null) {
+            known_nodes[k] = [known_nodes[k]]
+            known_nodes[k].push(v)
+         } else {
+            known_nodes[k] = v
          }
-         known_nodes_map.set(k, v);
       }
    }
 
@@ -185,9 +186,9 @@ export class ReplacementBuilder {
       return true;
    }
 
-   isKnownInclude(include, known_nodes_map, root) {
+   isKnownInclude(include, known_nodes, root) {
       if (include.includes('http')) return false;
-      if (!known_nodes_map.has(include)) {
+      if (!known_nodes[include]) {
          console.log(`include '${include}' not founded
             root: ${root}`);
          return false;
@@ -200,15 +201,20 @@ export class ReplacementBuilder {
       return true;
    }
 
-   async add_known_include(root, include_alias, include_node_name, known_nodes_map) {
+   async add_known_include(root, include_alias, include_node_name, known_nodes) {
       let data;
-      if (!this.isKnownInclude(include_node_name, known_nodes_map, root)) return
-      data = known_nodes_map.get(include_node_name);
+      if (!this.isKnownInclude(include_node_name, known_nodes, root)) return
+      data = known_nodes[include_node_name];
+      if (util.get_type(data) === util.types.Array) {
+         console.log(`include ${include_node_name} has ${data.length} items, taking first`)
+         data = data[0]
+         console.log(data)
+      }
       if (!data) return;
       root[include_alias] = data;
    }
 
-   async collect_replacements(node, collection_by_lvl, known_nodes_map, priority_lvl, is_matched = false) {
+   async collect_replacements(node, collection_by_lvl, known_nodes, priority_lvl, is_matched = false) {
       let urls = node[known_keys.urls];
       if (urls) {
          if (!this.check_url(urls)) {
@@ -225,7 +231,7 @@ export class ReplacementBuilder {
       let includes = node[known_keys.include];
       if (includes) {
          for (const [include_alias, include_node_name] of Object.entries(includes)) {
-            await this.add_known_include(node, include_alias, include_node_name, known_nodes_map);
+            await this.add_known_include(node, include_alias, include_node_name, known_nodes);
          }
       }
       for (const [k, v] of Object.entries(node)) {
@@ -234,7 +240,7 @@ export class ReplacementBuilder {
          if (val_type == util.types.Array) {
             await this.add_random_entity(k, v, collection_by_lvl, priority_lvl);
          } else if (val_type == util.types.Dict) {
-            await this.collect_replacements(v, collection_by_lvl, known_nodes_map, priority_lvl, is_matched);
+            await this.collect_replacements(v, collection_by_lvl, known_nodes, priority_lvl, is_matched);
          } else if (val_type === util.types.String) {
             await this.add_basic_entity(k, v, collection_by_lvl, priority_lvl);
          }

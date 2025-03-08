@@ -11,4 +11,6 @@
       "https://www.wa01.com*",
       "https://ranobe.me*"
    ],
+   "READER_MODE_CONFIG_URL": "https://api.npoint.io/ec469b350811e7bacb82",
+   "WORD_TEXT_REPLACE_CONFIG_URL": "https://api.npoint.io/ec469b350811e7bacb82"
 }

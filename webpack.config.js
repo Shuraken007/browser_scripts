@@ -22,7 +22,10 @@ let config = {
       new ConfigInsert(
          __dirname,
          ['config.jsonc', 'config_example.jsonc'],
-         ['TELEGRAM_TOKEN', 'TELEGRAM_CHAT_ID', 'INCLUDE_HTTP']
+         [
+            'TELEGRAM_TOKEN', 'TELEGRAM_CHAT_ID', 'INCLUDE_HTTP',
+            'READER_MODE_CONFIG_URL', 'WORD_TEXT_REPLACE_CONFIG_URL'
+         ]
       ),
    ],
    module: {

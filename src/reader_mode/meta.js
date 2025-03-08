@@ -11,7 +11,7 @@ INCLUDE_HTTP
 
 /* jshint esversion: 9 */
 {
-   const CONFIG_URL = "https://api.npoint.io/ec469b350811e7bacb82";
+   const CONFIG_URL = "READER_MODE_CONFIG_URL";
 
    const TG_CONFIG = { token: "TELEGRAM_TOKEN", chat_id: "TELEGRAM_CHAT_ID" };
 
