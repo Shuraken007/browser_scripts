@@ -12,6 +12,7 @@ let config = {
       reader_mode: './src/reader_mode/main.js',
       word_text_replace: './src/word_text_replace/main.js',
       kakao_saver: './src/kakao_saver/main.js',
+      kakao_saver_min: './src/kakao_saver/main.js',
    },
    output: {
       filename: '[name].js',
@@ -40,10 +41,11 @@ let config = {
       ],
    },
    optimization: {
-      minimize: false,
+      minimize: true,
       minimizer: [
          (compiler) => {
             new TerserPlugin({
+               include: /_min\.js$/,
                terserOptions: {
                   format: {
                      comments: false

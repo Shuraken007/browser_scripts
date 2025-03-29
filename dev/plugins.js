@@ -24,7 +24,9 @@ export class HeadInsert {
          const asset = compilation.getAsset(i);  // <- standardized version of asset object
          const source = asset.source.source(); // <- standardized way of getting asset source
 
-         let dir_name = path.parse(asset.name).name
+         let dir_by_asset = asset.name.replace('_min', '')
+
+         let dir_name = path.parse(dir_by_asset).name
          let meta = path.resolve(this.src, dir_name, 'meta.js')
 
          let content = ""

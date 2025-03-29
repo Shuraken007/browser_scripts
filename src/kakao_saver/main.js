@@ -1,5 +1,5 @@
 import { delay } from '../util/common.js'
-import { createWorker } from 'tesseract.js';
+import { createWorker, createScheduler } from 'tesseract.js';
 
 function is_cover() {
    let root = [...document.querySelectorAll('div')].filter(x => x.shadowRoot)
@@ -55,7 +55,9 @@ function save_image_urls(urls) {
    let storage = localStorage.getItem(`kakao_saver_urls_${book}`) || '{}'
    storage = JSON.parse(storage)
    storage[chapter] = urls
-   localStorage.setItem(`kakao_saver_urls_${book}`, JSON.stringify(storage))
+   storage = JSON.stringify(storage)
+   localStorage.setItem(`kakao_saver_urls_${book}`, storage)
+   GM_setValue('kakao_saver_img_urls', storage)
    console.log(`saved ${urls.length} urls for ${chapter} chapter`)
 }
 
@@ -66,14 +68,6 @@ function get_image_urls() {
    if (urls.length === 0)
       return null
    return urls
-}
-
-function copy_urls() {
-   let [book, _] = get_book_chapter()
-   let storage = localStorage.getItem(`kakao_saver_urls_${book}`) || '{}'
-   console.log('copy this ursl:')
-   console.log(storage)
-   console.log('run on any page without cross-domain polycy: window.kk_recognize_img(COPIED_URLS)')
 }
 
 function save() {
@@ -110,27 +104,6 @@ function save_to_file(str, file_name, type = 'text/plain;charset=utf-8') {
    document.body.removeChild(link);
 }
 
-function select_and_load_file(contentType) {
-   return new Promise(resolve => {
-      let input = document.createElement('input');
-      input.type = 'file';
-      input.accept = contentType;
-
-      input.onchange = () => {
-         let files = Array.from(input.files);
-         var reader = new FileReader();
-         reader.readAsText(files[0], 'UTF-8');
-         reader.onload = readerEvent => {
-            var content = readerEvent.target.result; // this is the content!
-            console.log(content);
-            resolve()
-         }
-      };
-
-      input.click();
-   });
-}
-
 let states = {
    cover: "cover",
    text: "text",
@@ -140,13 +113,11 @@ let states = {
 
 class Scrapper {
    constructor() {
-      this.worker = null
       this.init_promise = this.init()
       this.onNavigateFunc = () => { this.run() }
    }
 
    async init() {
-      this.worker = await createWorker('eng');
       window.navigation.addEventListener("navigate", this.onNavigateFunc)
       // const ret = await worker.recognize('https://tesseract.projectnaptha.com/img/eng_bw.png');
       // console.log(ret.data.text);
@@ -207,8 +178,56 @@ class Scrapper {
       console.log(`loaded in ${total_sec} sec`)
    }
 
-   async kk_recognize_img(urls) {
-      console.log(urls)
+   async create_workers(n, sheduler) {
+      for (let i = 0; i < n; i++)
+         sheduler.addWorker(await createWorker('kor'))
+   }
+
+   async parse_img(start = 1, end = 10000) {
+      let storage = GM_getValue('kakao_saver_img_urls') || '{}'
+      let map_chapter_urls = JSON.parse(storage)
+      if (map_chapter_urls === '{}') {
+         console.log('no parsed urls')
+      }
+      let sorted_pairs = Object.entries(map_chapter_urls).sort(([, a], [, b]) => Number(b) - Number(a))
+      if (sorted_pairs.length === 0) {
+         console.log("nothing to parse, no chapters")
+         return
+      }
+      const scheduler = createScheduler();
+      await this.create_workers(5, scheduler)
+
+      let chapter_rel_number = 1
+      let chapters = []
+      for (let [chapter_abs_number, urls] of sorted_pairs) {
+         if (chapter_rel_number < start || chapter_rel_number > end) {
+            chapter_rel_number++
+            continue
+         }
+         let promises = []
+         let pages = []
+         let chapter_id = `${chapter_rel_number} | ${chapter_abs_number}`
+         for (let i = 0; i < urls.length; i++) {
+            let url = urls[i]
+            promises.push(scheduler.addJob('recognize', url))
+         }
+         console.log(`started chapter ${chapter_id}, analyzing ${urls.length} images`)
+         await Promise.all(promises)
+         for (let i = 0; i < promises.length; i++) {
+            let res = await promises[i]
+            if (!res.data || !res.data.text || res.data.text === '') {
+               console.log(`can't recognise in chapter ${chapter_id}: url: ${urls[i]}`)
+            }
+            pages.push(res.data.text)
+         }
+         chapters.push(`Глава ${chapter_id}\n\n`)
+         chapters.push(pages.join("\n"))
+         chapter_rel_number++
+      }
+      scheduler.terminate()
+      let file_name = `kakao_book-${sorted_pairs.length}_chapters-${Date.now()}.txt`;
+
+      save_to_file(chapters.join(''), file_name)
    }
 
    async auto() {
@@ -271,10 +290,10 @@ await scrapper.init_promise
 scrapper.run()
 
 // ручное управление
-Object.assign(window, {
+Object.assign(unsafeWindow, {
    kk_save: () => { save() },
    kk_auto: () => { scrapper.auto() },
    kk_scan_img: () => { scrapper.scan_img() },
-   kk_copy_urls: copy_urls,
-   kk_recognize_img: (urls) => { scrapper.kk_recognize_img(urls) },
+   kk_parse_img: (...args) => { scrapper.parse_img(...args) },
 });
+console.log('kakao_saver started')
