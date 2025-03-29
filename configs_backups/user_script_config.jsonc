@@ -1,6 +1,5 @@
 {
    "word_text_replace": {
-      "chinese_map": "https://api.npoint.io/bc3aeb2a001a575ca23d",
       "replacements": "https://api.npoint.io/adca32df1622919ca5bd",
       "replacements_default_level": 1,
       "binds": {
@@ -21,15 +20,87 @@
                3
             ],
          }
-      }
+      },
+      "chinese_map": "https://raw.githubusercontent.com/Shuraken007/browser_scripts/refs/heads/main/configs_backups/tradition_to_simplified_chinese.jsonc",
    },
    "reader_mode": {
-      "config": {
-         "wallhaven_url": "https://api.npoint.io/c46ad28bf0fafa87d295",
+      "common": {
+         "wallpapers": {
+            "url": "https://api.npoint.io/c46ad28bf0fafa87d295",
+            "likes_weight_pct": 20,
+            "update_bg_img_time_min": 5,
+            "next_images_preload": 10,
+            "prev_images_remember": 10,
+            "prev_images_preload": 2,
+            "image_max_load_time_ms": 5000,
+         },
+         "css_body": {
+            "padding-top": "300px",
+            "padding-bottom": "1000px",
+            "height": "auto",
+         },
+         "css_text": {
+            "text-indent": "22.75px",
+            "text-align": "left",
+            "text-size-adjust": "100%",
+            "word-break": "break-word",
+            "line-height": "41.6px",
+            "font-size": "24px",
+         },
+         "css_default": {
+            "margin": "0 auto",
+            "background-color": "rgba(0, 0, 0, 0)",
+            "padding-left": "0px",
+            "padding-right": "0px",
+            "border-width": "0px",
+         },
+         "css_content": {
+            "background-color": "rgb(229, 207, 157)",
+            "color": "rgb(38, 36, 37)",
+            "padding": "60px 50px",
+            "border-radius": "30px",
+         },
+         "css_comment": {
+            "background-color": "rgb(229, 207, 157)",
+            "color": "rgb(38, 36, 37)",
+         },
+         "css_parents": {},
+         "css_siblings": {},
+         "override_by_nearest_width": {
+            "1200": {
+               "text_css": {
+                  "font-size": "26px"
+               },
+            },
+            "1100": {
+               "text_css": {
+                  "font-size": "26px"
+               },
+            },
+            "900": {
+               "text_css": {
+                  "font-size": "20px"
+               },
+            },
+            "800": {
+               "text_css": {
+                  "font-size": "18px"
+               },
+               "content_css": {
+                  "padding-left": "20px",
+                  "padding-right": "20px",
+               },
+               "div_max_width_pct": 100
+            },
+         },
+         "div_max_width_pct": 85,
       },
       "royalroad": {
          "url": "https://www.royalroad.com/fiction/*/*/chapter/*/*",
-         "next": ".btn:contains('Next'):contains('Следующая')",
+         "next": [
+            ".btn:contains('Next')",
+            ".btn:contains('След')"
+         ],
          "remove": [
             ".author-note-portlet",
             ".portlet-footer",
@@ -50,20 +121,10 @@
             ".page-header",
             ".page-prefooter",
          ],
-         "transparent": [
-            ".page-container",
-            ".page-content-wrapper",
-            ".page-content",
-            ".background-overlay",
-            ".portlet-title",
-            ".portlet-body",
-            ".portlet-body:parent()"
-         ],
       },
       "ranobe.me": {
          "url": "https://ranobe.me/ranobe*/*",
          "next": ".read_nav_button.read_nav_button_bottom:contains('Следующая')",
-         "font": "#fontSize",
          "remove": [
             ".footer",
             "#header",
@@ -73,17 +134,22 @@
             "#site-content-right",
             "div[id^='yandex']"
          ],
-         "bg_img_div": ".bg_image",
+         "image_div": ".bg_image",
       },
       "ranobelib": {
          "url": "https://ranobelib.me/ru/*/read/v*/*",
          "next": ".btn:contains('Вперёд')",
          "remove": [
             "button:contains('реклам'):parent()",
-         ]
+         ],
+         "ignore": [
+            "header.v5_x",
+            ".ua_b"
+         ],
       },
       "ranobelib_main": {
          "url": "https://ranobelib.me/ru?",
+         "is_wallpaper": false,
          "is_reader": false,
          "remove": [
             ".section[data-home-block='slider']",
@@ -101,7 +167,8 @@
             "footer",
             ".chr-title",
             "html iframe",
-            ".PUBFUTURE"
+            ".PUBFUTURE",
+            ".unlock-buttons"
          ],
          "next": ".btn:contains('Next')"
       },

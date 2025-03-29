@@ -2,8 +2,6 @@
   "devDependencies": {
     "css-loader": "^7.1.2",
     "jquery": "^3.7.1",
-    "mocha": "^8.4.0",
-    "mocha-loader": "^5.1.5",
     "style-loader": "^4.0.0",
     "webpack": "^5.98.0",
     "webpack-cli": "^6.0.1"
@@ -19,5 +17,8 @@
     "test": "mocha tests"
   },
   "author": "Shuraken",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "tesseract.js": "^6.0.0"
+  }
 }

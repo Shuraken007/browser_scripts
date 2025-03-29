@@ -1,5 +1,5 @@
 import { CacheUrlLoader } from "../cache_url_loader.js"
-import * as util from '../util.js'
+import * as util from '../util/common.js'
 
 const known_keys = {
    urls: '__urls',
@@ -30,13 +30,13 @@ const ReplacementConverter = {
 const storage_replacements = 'saved_replacements';
 
 export class ReplacementBuilder {
-   constructor({ replacements_url, chinese_convertor, level, onUpdateEvent = null }) {
+   constructor({ replacements_url, chinese_convertor, level, onUpdate = null }) {
       this.replacements_url = replacements_url
       this.chinese_convertor = chinese_convertor
       this.level = level
-      this.onUpdateEvent = onUpdateEvent
+      this.onUpdate = onUpdate
 
-      this.cache_url_loader = new CacheUrlLoader(onUpdateEvent);
+      this.cache_url_loader = new CacheUrlLoader(onUpdate);
       this.is_simple_chinese = false
       this.use_cache = true
    }
@@ -68,7 +68,7 @@ export class ReplacementBuilder {
       this.processConfig(node)
       for (const [key, child] of Object.entries(node)) {
          if (known_keys.contains(key)) continue;
-         if (util.get_type(child) === util.types.Dict)
+         if (util.isDict(child))
             await this.loadIncludesAndConfig(child);
       }
       return node
@@ -86,7 +86,7 @@ export class ReplacementBuilder {
          // ignore error on invalid included json
          console.log(`error on loading url include ${url}`)
          console.log(err)
-         this.cache_url_loader.resetOnError(url)
+         this.cache_url_loader.onError(url)
          return;
       }
       if (!json) return;
@@ -153,7 +153,7 @@ export class ReplacementBuilder {
 
    collect_names(node, known_nodes) {
       for (const [k, v] of Object.entries(node)) {
-         if (util.get_type(v) !== util.types.Dict) continue;
+         if (!util.isDict(v)) continue;
          this.collect_names(v, known_nodes);
          if (known_nodes[k] != null) {
             known_nodes[k] = [known_nodes[k]]
@@ -165,7 +165,7 @@ export class ReplacementBuilder {
    }
 
    check_url(pattern_arr) {
-      if (util.get_type(pattern_arr) != util.types.Array) {
+      if (!util.isArray(pattern_arr)) {
          throw new Error(`field ${known_keys.urls} exptect to be Array, got ${obj_type}`);
       }
       for (const url_pattern of pattern_arr) {
@@ -178,7 +178,7 @@ export class ReplacementBuilder {
 
    validate_lvl(lvl, root) {
       let lvl_type = util.get_type(lvl);
-      if (lvl_type !== util.types.Int) {
+      if (!util.isInt(lvl)) {
          console.log(`field ${known_keys.level} must be number, got ${lvl_type}
             root: ${root}`);
          return false;
@@ -205,7 +205,7 @@ export class ReplacementBuilder {
       let data;
       if (!this.isKnownInclude(include_node_name, known_nodes, root)) return
       data = known_nodes[include_node_name];
-      if (util.get_type(data) === util.types.Array) {
+      if (util.isArray(data)) {
          console.log(`include ${include_node_name} has ${data.length} items, taking first`)
          data = data[0]
          console.log(data)
@@ -320,10 +320,10 @@ export class ReplacementBuilder {
       return replacements;
    }
 
-   resetOnError() {
+   onError() {
       console.log('removed storage_replacements')
       localStorage.removeItem(storage_replacements);
-      this.cache_url_loader.resetOnError()
+      this.cache_url_loader.onError()
    }
 
 }

@@ -1,5 +1,10 @@
 {
-   "-screenshot -woman -girl -girls -boy -drift -sport -cars -portrait -boys -logo -men -text -racing -bike": [
+   "fixed_bg_images": [
+      "https://ranobe.me/images/bg/4.jpg",
+      "https://www.royalroad.com/dist/img/new-bg-small.jpg",
+      "https://novelbin.com/img/bg.jpg",
+   ],
+   "wallhaven": [
       "d6/wallhaven-d6y12l.jpg",
       "3l/wallhaven-3lepy9.jpg",
       "l8/wallhaven-l8x1pr.jpg",

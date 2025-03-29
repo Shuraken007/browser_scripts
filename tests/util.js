@@ -1,4 +1,4 @@
-import * as util from "../src/util.js"
+import * as util from "../src/util/common.js"
 import * as assert from "assert"
 
 describe("iter_run", () => {

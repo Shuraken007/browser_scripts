@@ -1,5 +1,5 @@
 import { CacheUrlLoader } from "../cache_url_loader.js"
-import { types, get_type } from "../util.js"
+import { types, get_type } from "../util/common.js"
 
 const rIsChinese = /\p{sc=Han}/u;
 
@@ -23,7 +23,7 @@ export class ChineseConvertor {
       if (!this.on)
          return
       let str_type = get_type(str)
-      if (str_type === types.Unknown) {
+      if (str_type === types.Null || types.Unknown) {
          throw new Error("no input");
       } else if (str_type !== types.String) {
          throw new Error("input is not string");

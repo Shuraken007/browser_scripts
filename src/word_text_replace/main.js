@@ -1,35 +1,23 @@
 import { ScriptRunner } from "../script_runner.js";
-import * as util from '../util.js'
+import { rnd_from_arr, isString, escapeRegexChars } from "../util/common.js";
+import { get_text_nodes } from "../util/dom.js";
 import { CacheUrlLoader } from "../cache_url_loader.js"
 import { ClickDetector } from "./click_detector.js";
 import { ReplacementBuilder } from "./replacement_builder.js";
 import { ChineseConvertor } from "./chinese_convertor.js";
 
 async function replaceText(node, replacements, replaced_nodes, runner) {
-   let exclude_tags = ['SCRIPT', 'STYLE']
-   if (node.tagName && exclude_tags.includes(node.tagName))
-      return
-   switch (node.nodeType) {
-      case Node.ELEMENT_NODE:
-         node.childNodes.forEach(async (n) => await replaceText(n, replacements, replaced_nodes, runner));
-         break;
-      case Node.TEXT_NODE: {
-         let text = node.textContent;
-         if (!text.trim()) break;
-         // console.log(node.nodeType, node.nodeValue)
-         let new_text = await make_replacements(text, replacements, runner);
-         if (text != new_text) {
-            // runner.ob_disconnect();
-            node.textContent = new_text;
-            if (replaced_nodes.has(node)) break;
-            replaced_nodes.set(node, text);
-            // runner.ob_connect();
-            // console.log(`${text}->${new_text}`);
-         }
-         break;
+   let text_nodes = get_text_nodes(node, false)
+   for (let node of text_nodes) {
+      let text = node.textContent;
+      // console.log(node.nodeType, node.nodeValue)
+      let new_text = await make_replacements(text, replacements, runner);
+      if (text != new_text) {
+         node.textContent = new_text;
+         if (replaced_nodes.has(node)) break;
+         replaced_nodes.set(node, text);
+         // console.log(`${text}->${new_text}`);
       }
-      case Node.DOCUMENT_NODE:
-         node.childNodes.forEach(async (n) => await replaceText(n, replacements, replaced_nodes));
    }
 }
 
@@ -40,7 +28,7 @@ async function make_replacements(text, replacements, runner) {
    }
    for (let [regex, replacement] of replacements) {
       if (replacement instanceof Array) {
-         replacement = util.rnd_from_arr(replacement);
+         replacement = rnd_from_arr(replacement);
       }
       let not_glyph_letter_in_replacement = isLetter(replacement.charAt(0)) || isLetter(replacement.slice(-1));
       if (are_letters_inserted && not_glyph_letter_in_replacement) {
@@ -68,8 +56,8 @@ function is_space_required(text, index) {
 
 function replaceAllRespectSpaces(text, re, replacement) {
    // if (!isLetter(replacement.charAt(0))) { return text; }
-   if (util.get_type(re) === util.types.String) {
-      re = new RegExp(util.escapeRegexChars(re));
+   if (isString(re)) {
+      re = new RegExp(escapeRegexChars(re));
    } else if (re instanceof RegExp && re.global) {
       re = new RegExp(re.source, re.flags.replace('g', ''));
    }
@@ -119,7 +107,7 @@ class Replacer {
          replacements_url: this.config.replacements,
          chinese_convertor: this.chinese_convertor,
          level: this.config.replacements_default_level || 1,
-         onUpdateEvent: () => { this.update_replacements() },
+         onUpdate: () => { this.update_replacements() },
       });
       this.click_detector = new ClickDetector(
          this.config.binds.n,
@@ -156,7 +144,7 @@ class Replacer {
       // console.log(this.replacements)
       this.replace();
 
-      document.body.addEventListener('click',
+      window.addEventListener('click',
          event => this.click_detector.on_click(event));
 
       this.builder.use_cache = false
@@ -165,11 +153,7 @@ class Replacer {
 
    replace(node = document.body) {
       if (!this.on) return;
-      try {
-         replaceText(node, this.replacements, this.replaced_nodes, this);
-      } catch (err) {
-         this.onError(err);
-      }
+      replaceText(node, this.replacements, this.replaced_nodes, this);
    }
 
    revert_nodes() {
@@ -198,8 +182,8 @@ class Replacer {
    }
 
    onError(err) {
-      this.cache_url_loader.resetOnError()
-      this.builder.resetOnError()
+      this.cache_url_loader.onError()
+      this.builder.onError()
       throw err
    }
 
@@ -211,6 +195,7 @@ let script_runner = new ScriptRunner(
    {
       name: "word_text_replace",
       onLoad: async () => { await replacer.onLoad() },
-      onMutation: (node) => { replacer.replace(node) }
+      onMutation: async (node) => { await replacer.replace(node) },
+      onError: async (err) => { await replacer.onError(err) },
    });
 script_runner.run()

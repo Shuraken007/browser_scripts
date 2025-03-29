@@ -1,7 +1,8 @@
 // rename to config.jsonc and fill with values
 {
-   "TELEGRAM_TOKEN": "",
-   "TELEGRAM_CHAT_ID": "",
+   "GIST_TOKEN": "",
+   "GIST_ID": "",
+   "GIST_FILE": "",
    "INCLUDE_HTTP": [
       "https://ranobelib.me*",
       "https://novelbin.com*",

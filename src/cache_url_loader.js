@@ -1,13 +1,11 @@
-import { load, toArr } from './util.js'
+import { load, toArr } from './util/common.js'
 
 export class CacheUrlLoader {
-   constructor(onUpdateEvent = null, is_json_expected = true) {
+   constructor(onUpdate = null, is_json_expected = true) {
       this.is_json_expected = is_json_expected
       this.use_cache = true
       this.cache = {};
-      this.is_updated = false;
-      this.onUpdateEvent = onUpdateEvent
-      this.load_promises = []
+      this.onUpdate = onUpdate
    }
 
    async load(url) {
@@ -23,8 +21,8 @@ export class CacheUrlLoader {
 
       // return data from localStorage
       // but load async and check if data updated
-      // set is_updated, call onUpdateEvent
-      this.load_promises.push(this._loadAndCache(url, data))
+      // set is_updated, call onUpdate
+      this._loadAndCache(url, data)
       return this.convertData(data)
    }
 
@@ -36,31 +34,15 @@ export class CacheUrlLoader {
 
    async _loadAndCache(url, known_data = null) {
       let data = await load(url);
-      if (known_data && known_data !== data) {
-         this.is_updated = true
-         this._onUpdate(url)
-      }
       localStorage.setItem(url, data);
+
+      if (known_data && known_data !== data && this.onUpdate) {
+         this.onUpdate(url)
+      }
       data = this.convertData(data)
       this.cache[url] = data
 
       return data
-   }
-
-   async _onUpdate(url) {
-      if (!this.onUpdateEvent) return
-      this.is_updated = false
-      this.load_promises = []
-      this.onUpdateEvent(url)
-   }
-
-   async getIsUpdateAndReset() {
-      await Promise.all(this.load_promises)
-      this.load_promises = []
-
-      let res = this.is_updated
-      this.is_updated = false
-      return res
    }
 
    // CacheUrlLoader don't catch errors on load
@@ -68,7 +50,7 @@ export class CacheUrlLoader {
    // If error appeared on processing loaded data, this function should be called
    // Cause wrong data cached and would returned on page reloading
    // It would always returned cause app crash and not overriding new data
-   resetOnError(urls = null) {
+   async onError(urls = null) {
       if (!urls)
          urls = Object.keys(this.cache)
       urls = toArr(urls)

@@ -11,6 +11,7 @@ let config = {
    entry: {
       reader_mode: './src/reader_mode/main.js',
       word_text_replace: './src/word_text_replace/main.js',
+      kakao_saver: './src/kakao_saver/main.js',
    },
    output: {
       filename: '[name].js',
@@ -23,7 +24,8 @@ let config = {
          __dirname,
          ['config.jsonc', 'config_example.jsonc'],
          [
-            'TELEGRAM_TOKEN', 'TELEGRAM_CHAT_ID', 'INCLUDE_HTTP',
+            'GIST_TOKEN', 'GIST_ID', 'GIST_FILE',
+            'INCLUDE_HTTP',
             'READER_MODE_CONFIG_URL', 'WORD_TEXT_REPLACE_CONFIG_URL'
          ]
       ),

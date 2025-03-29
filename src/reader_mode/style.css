@@ -1,0 +1,28 @@
+.userscript_reader_mode_default {}
+
+.userscript_reader_mode_content {}
+
+.userscript_reader_mode_comment {}
+
+.userscript_reader_mode_parents {}
+
+.userscript_reader_mode_siblings {}
+
+.userscript_reader_mode_body {}
+
+.userscript_reader_mode_text {
+   user-select: auto !important;
+}
+
+.userscript_reader_mode_image_div {
+   background-color: rgba(0, 0, 0, 0);
+   position: fixed;
+   left: 50%;
+   transform: translate(-50%, 0);
+   top: 0;
+   z-index: -10,
+}
+
+.userscript_reader_mode_image {
+   position: relative;
+}
