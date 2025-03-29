@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Reader Mode
+// @name         Kakao Saver
 // @namespace    http://tampermonkey.net/
 // @version      0.1
 // @license MIT
-// @description  scrap text from kakao saver
+// @description  scrap text from page.kakao site
 // @author       Shuraken007
 
 // @include        https://page.kakao.com/content/*/viewer/*
