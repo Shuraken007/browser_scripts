@@ -11,9 +11,11 @@
 // @run-at         document-start
 // @grant          GM_setValue
 // @grant          GM_getValue
+// @grant          unsafeWindow
 // ==/UserScript==
 
 /* jshint esversion: 9 */
 {
+   const IS_DEBUG = true;
    SCRIPT_BODY
 };

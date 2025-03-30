@@ -1,6 +1,6 @@
-import { isEmpty, toArr } from "util/common.js"
-import { get_node_parents } from "util/dom.js"
-import { get_elements_by_query_arr } from "util/jq.js"
+import { isEmpty } from "../util/common.js"
+import { get_node_parents } from "../util/dom.js"
+import { get_elements_by_query_arr } from "../util/jq.js"
 
 class RuleHelper {
    constructor() {
@@ -16,34 +16,35 @@ class RuleHelper {
          try { sheet.cssRules } catch (err) { continue }
          for (let sheetRule of [...sheet.cssRules].reverse()) {
             if (!sheetRule.selectorText) continue
-            if (sheetRule.selectorText === selector) {
-               this.searched_rules[selector] = sheetRule
-               return sheetRule
-            }
+            if (sheetRule.selectorText !== selector) continue
+            this.searched_rules[selector] = sheetRule
+            return sheetRule
          }
       }
    }
 
-   split_rule(css_text) {
-      let selector = css_text.substr(0, css_text.indexOf('{'))
-      let body = css_text.substr(css_text.indexOf('{'))
+   split_rule(rule_as_str) {
+      let selector = rule_as_str.substr(0, rule_as_str.indexOf('{'))
+      let body = rule_as_str.substr(rule_as_str.indexOf('{'))
       return [selector, body]
    }
 
+   get_rule_body_no_bracket(rule) {
+      let str = rule.cssText
+      return str.substring(str.indexOf('{') + 1, str.lastIndexOf('}'))
+   }
+
    union_rules(class_names) {
-      let res = ""
+      let bodies = []
       for (let class_name of class_names) {
          let rule = this.get_rule(class_name)
-         let [_, css_text] = this.split_rule(rule.cssText)
-         if (res === "{ }") continue
-         res += css_text
+         bodies.push(this.get_rule_body_no_bracket(rule))
       }
-      res = res.replaceAll("}{", ";")
-      return res
+      return "{" + bodies.join(";") + "}"
    }
 }
 
-class CssClassSetter {
+export class CssClassSetter {
    constructor(ignore_nodes) {
       this.nodes_class_added = new Set()
       this.nodes_style_added = new Map()
@@ -53,70 +54,75 @@ class CssClassSetter {
       this.class_prefix = 'userscript_reader_mode_'
    }
 
-   add_class(node, class_name) {
+   AddClass(node, class_name) {
       node = this.get_class_valid_node(node)
       if (this.is_ignored(node)) return
       class_name = this.class_name(class_name)
 
-      if (div.classList.contains(class_name))
+      if (node.classList.contains(class_name))
          return
-      div.classList.add(class_name)
+      node.classList.add(class_name)
       this.nodes_class_added.add(node)
    }
 
-   create_node_rule(node, class_names, are_children) {
+   AddOverridingClass(node, class_name, is_default = true, are_children = false) {
       node = this.get_class_valid_node(node)
       if (this.is_ignored(node)) return
-      class_names = toArr(class_names)
-      class_names = class_names.map(e => this.class_name(e))
-      let class_name = class_names[class_names.length - 1]
+      class_name = this.class_name(class_name)
 
-      this.add_class(node, class_name)
+      this.AddClass(node, class_name)
 
       let node_selector = this.get_node_highpriority_selector(node, class_name, are_children)
       let style = this.get_style_by_node(node, node_selector)
       if (style.textContent.startsWith(node_selector)) return
-      let css_text = this.rule_helper.union_rules(class_names)
-      style.textContent = node_selector + css_text
+      let rule_body
+      if (is_default)
+         rule_body = this.rule_helper.union_rules([this.class_name('default'), class_name])
+      else {
+         let rule = this.rule_helper.get_rule(class_name)
+         [_, rule_body] = this.rule_helper.split_rule(rule.cssText)
+      }
+      style.textContent = node_selector + rule_body
    }
 
-   set_node_style_properties(node, props) {
+   AddNodeStyle(node, props) {
       if (!this.nodes_style_added.has(node))
          this.nodes_style_added.set(node, {})
 
       let saved_changes = this.nodes_style_added.get(node)
       for (let [k, v] of Object.entries(props)) {
-         element.style[k.toString()] = v;
-         saved_changes[k.toString()] = v;
+         let key = k.toString()
+         if (!saved_changes.hasOwnProperty(key))
+            saved_changes[key] = element.style[key];
+         element.style[key] = v;
       }
    }
 
-   set_css_class_property(class_name, props, is_important = true) {
+   AddRuleStyle(class_name, props, is_important = true) {
       class_name = this.class_name(class_name)
       let rule = this.rule_helper.get_rule(class_name)
       if (!rule) return
-
+      let old_rule_body = this.rule_helper.get_rule_body_no_bracket(rule)
       for (let [prop, val] of Object.entries(props)) {
          let args = is_important ? [prop, val, 'important'] : [prop, val]
          rule.style.setProperty(...args)
       }
 
       if (!this.created_styles[class_name]) return
-      let [_, css_text] = this.rule_helper.split_rule(rule.cssText)
+      let new_rule_body = this.rule_helper.get_rule_body_no_bracket(rule)
+      z
       for (let style of this.create_styles[class_name]) {
-         let [selector, _] = split_rule(style.textContent)
-         style.textContent = selector + css_text
+         style.textContent = style.textContent.replace(old_rule_body, new_rule_body)
       }
    }
 
-   set_class_width(class_name, max_width) {
-      class_name = this.class_name(class_name)
-      let rule = this.rule_helper.get_rule(class_name);
+   SetRuleWidth(class_name, max_width) {
+      let rule = this.rule_helper.get_rule(this.class_name(class_name));
       let inner_width = max_width
       for (const prop of ['padding-left', 'padding-right', 'border-left', 'border-right', 'margin-left', 'margin-right']) {
          let style_prop = rule.style.getPropertyValue(prop)
          if (!style_prop) continue
-         let val = parseInt(prop) || 0
+         let val = parseInt(style_prop) || 0
          inner_width -= val
       }
       let props = {
@@ -124,10 +130,10 @@ class CssClassSetter {
          'width': inner_width + 'px',
          'box-sizing': 'content-box',
       }
-      this.set_css_class_property(class_name, props)
+      this.AddRuleStyle(class_name, props)
    }
 
-   reset_classes() {
+   ResetClasses() {
       for (let node of this.nodes_class_added) {
          let to_remove = []
          for (let class_name of [...node.classList]) {
@@ -155,10 +161,10 @@ class CssClassSetter {
 
    is_ignored(node) {
       let i_nodes = get_elements_by_query_arr(this.ignore_nodes)
-      if (i_nodes.includes(node)) return false
+      if (i_nodes.includes(node)) return true
       for (let i_node of i_nodes)
-         if (i_node.contains(node)) return false
-      return true
+         if (i_node.contains(node)) return true
+      return false
    }
 
    get_classes_selector(node) {
@@ -201,10 +207,10 @@ class CssClassSetter {
    }
 
    get_style_by_node(node, node_selector) {
-      let style_map = this.created_styles[class_name]
+      let style_map = this.created_styles[node_selector]
       if (!style_map)
-         this.created_styles[class_name] = new Map()
-      if (!this.created_styles.has(node)) {
+         this.created_styles[node_selector] = new Map()
+      if (!style_map.has(node)) {
          let style = document.createElement("style")
          document.head.appendChild(style)
          style_map.add(node, style)

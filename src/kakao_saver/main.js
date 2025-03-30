@@ -1,6 +1,6 @@
 import { delay } from '../util/common.js'
 import { createWorker, createScheduler } from 'tesseract.js';
-
+// @require      file://wsl$/Ubuntu/home/alex/p/js/browser_scripts/dist/kakao_saver.js
 function is_cover() {
    let root = [...document.querySelectorAll('div')].filter(x => x.shadowRoot)
    if (root.length === 0) return null
@@ -70,7 +70,7 @@ function get_image_urls() {
    return urls
 }
 
-function save() {
+function save_text() {
    let [book, _] = get_book_chapter()
    let storage = localStorage.getItem(`kakao_saver_${book}`) || '{}'
    storage = JSON.parse(storage)
@@ -112,18 +112,10 @@ let states = {
 }
 
 class Scrapper {
-   constructor() {
-      this.init_promise = this.init()
-      this.onNavigateFunc = () => { this.run() }
-   }
-
-   async init() {
-      window.navigation.addEventListener("navigate", this.onNavigateFunc)
-      // const ret = await worker.recognize('https://tesseract.projectnaptha.com/img/eng_bw.png');
-      // console.log(ret.data.text);
-   }
+   constructor() { }
 
    async scroll_to_end() {
+      this.log('try scroll')
       while (!get_next_btn().classList.contains('opacity-30')) {
          const event = new KeyboardEvent('keydown', {
             key: 'ArrowRight',
@@ -134,11 +126,13 @@ class Scrapper {
             cancelable: true
          });
          document.dispatchEvent(event);
+         this.log('send ArrowRigth to scroll')
          await delay(10)
       }
    }
 
    async scroll_next_chapter() {
+      this.log('try next chapter')
       let cur_page = document.body.innerHTML
       let next_chapter_btn = get_next_chapter_btn()
       next_chapter_btn.click()
@@ -147,17 +141,20 @@ class Scrapper {
       while (Date.now() - start < timeout) {
          if (document.body.innerHTML !== cur_page && get_next_btn())
             return true
+         this.log('wait next chapter loaded')
          await delay(200)
       }
       return false
    }
 
    async scan_img() {
-      window.navigation.removeEventListener("navigate", this.onNavigateFunc)
       let start = Date.now()
+      this.log('scan_img started')
       while (true) {
-         if (!get_next_btn())
+         if (!get_next_btn()) {
+            this.log('no next_btn')
             continue
+         }
 
          await this.scroll_to_end()
          let urls = get_image_urls()
@@ -230,8 +227,7 @@ class Scrapper {
       save_to_file(chapters.join(''), file_name)
    }
 
-   async auto() {
-      window.navigation.removeEventListener("navigate", this.onNavigateFunc)
+   async scan_text() {
       let state = states.cover
       let start = Date.now()
       let last_change = Date.now()
@@ -273,26 +269,18 @@ class Scrapper {
       console.log(`loaded in ${total_sec} sec`)
    }
 
-   async run() {
-      await delay(2000) // avoid save prev. chapter data
-      let paragraphs;
-      while (!paragraphs || is_cover()) {
-         paragraphs = get_paragraphs()
-         await delay(200)
-      }
-      save_paragraphs(paragraphs)
-      allow_copy()
+   log(msg) {
+      if (!IS_DEBUG) return
+      console.log(msg)
    }
 }
 
 let scrapper = new Scrapper()
-await scrapper.init_promise
-scrapper.run()
 
 // ручное управление
 Object.assign(unsafeWindow, {
-   kk_save: () => { save() },
-   kk_auto: () => { scrapper.auto() },
+   kk_save_text: () => { save_text() },
+   kk_scan_text: () => { scrapper.scan_text() },
    kk_scan_img: () => { scrapper.scan_img() },
    kk_parse_img: (...args) => { scrapper.parse_img(...args) },
 });

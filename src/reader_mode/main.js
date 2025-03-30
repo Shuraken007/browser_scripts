@@ -3,13 +3,13 @@ import * as util from '../util/common.js'
 import * as j_util from '../util/jq.js'
 import * as w_util from '../util/window.js'
 import * as d_util from '../util/dom.js'
-import * as c_util from '../util/css.js'
 import { ScriptRunner, mutation_modes } from "../script_runner.js";
 import { CacheUrlLoader } from "../cache_url_loader.js"
 import { SyncSession } from "./sync_session.js"
 import { ImageLoader } from "./image_loader.js"
 import { PageAnalyzer } from './page_analyser.js'
 import { ImageSetter } from './image_setter.js'
+import { CssClassSetter } from './css_class_setter.js'
 
 let script_runner;
 
@@ -21,6 +21,7 @@ class Reader {
       this.page_analyser = null
       this.image_loader = null
       this.image_setter = null
+      this.css_class_setter = null
 
       this.loaded_config = null
       this.config_by_url = null
@@ -123,6 +124,7 @@ class Reader {
    async onLoad() {
       this.config = this.build_config_by_width(this.config_by_url)
 
+      this.css_class_setter = new CssClassSetter(this.config.ignore)
       this.page_analyser = new PageAnalyzer(this.config)
       this.image_setter = new ImageSetter(this.config, this.page_analyser)
       this.image_loader = new ImageLoader({
@@ -172,24 +174,22 @@ class Reader {
 
    async onMutation() {
       if (!this.any_url_matched) return
-      await this.prepareNewPage()
+      this.prepareNewPage()
    }
 
    update_css() {
       const known_name = ['default', 'content', 'comment', 'parents', 'siblings', 'body', 'text',]
       for (const name of known_name) {
-         let config_key = 'css_' + name
-         let css_name = c_util.css_name(name)
-         let config_props = this.config[config_key]
+         let config_props = this.config['css_' + name]
          if (!config_props) continue
-         c_util.set_css_class_property(css_name, config_props)
+         this.css_class_setter.AddRuleStyle(name, config_props)
       }
 
       for (const class_name of ['content', 'comment', 'parents', 'siblings'])
-         c_util.set_class_width(class_name, this.config.div_width)
+         this.css_class_setter.SetRuleWidth(class_name, this.config.div_width)
    }
 
-   async prepareNewPage() {
+   prepareNewPage() {
       let conf = this.config
       if (conf.remove)
          conf.remove.forEach(e => j_util.jq(e).remove());
@@ -202,44 +202,42 @@ class Reader {
       let divs = this.page_analyser.get_divs()
       if (divs.length === 0)
          return
-      await this.add_div_css(divs);
-      await this.add_body_css()
+      this.add_div_css(divs);
+      this.add_body_css()
       this.fix_text()
    }
 
    async add_div_css(divs) {
-      let excluded = j_util.get_elements_by_query_arr(this.config.ignore)
       let w = this.config.div_width
       let already_marked = [...divs]
       for (let i = 0; i < divs.length; i++) {
          let style_name = i == 0 ? 'content' : 'comment'
          let div = divs[i]
-         await c_util.generate_css_by_class(div, ['default', style_name], excluded)
+         this.css_class_setter.AddOverridingClass(div, style_name)
          for (let sibling of d_util.get_node_siblings(div)) {
             if (already_marked.includes(sibling)) continue
-            await c_util.generate_css_by_class(sibling, ['default', 'siblings'], excluded)
+            this.css_class_setter.AddOverridingClass(sibling, 'siblings')
             already_marked.push(sibling)
          }
          for (let parent of d_util.get_node_parents(div)) {
             if (already_marked.includes(parent)) continue
             if (!(parent.offsetWidth && parent.offsetWidth > w)) {
-               await c_util.generate_css_by_class(parent, ['default', 'parents'], excluded)
+               this.css_class_setter.AddOverridingClass(parent, 'parents')
             } else
-               await c_util.generate_css_by_class(parent, 'default', excluded)
+               this.css_class_setter.AddOverridingClass(parent, 'default', false)
             already_marked.push(parent)
             for (let sibling of d_util.get_node_siblings(parent)) {
                if (already_marked.includes(sibling)) continue
-               await c_util.generate_css_by_class(sibling, ['default', 'siblings'], excluded)
+               this.css_class_setter.AddOverridingClass(sibling, 'siblings')
                already_marked.push(sibling)
             }
          }
       }
-      await c_util.generate_css_by_class(divs[0], 'text', excluded, true)
+      this.css_class_setter.AddOverridingClass(divs[0], 'text', false, true)
    }
 
-   async add_body_css() {
-      let excluded = j_util.get_elements_by_query_arr(this.config.ignore)
-      await c_util.generate_css_by_class(document.body, 'body', excluded)
+   add_body_css() {
+      this.css_class_setter.AddOverridingClass(document.body, 'body', false)
    }
 
    fix_text() {
@@ -281,7 +279,6 @@ class Reader {
 
 let reader = new Reader();
 await reader.init_promise;
-
 script_runner = new ScriptRunner(
    {
       name: "reader_mode",
@@ -291,3 +288,10 @@ script_runner = new ScriptRunner(
       mutation_mode: mutation_modes.once_per_bunch,
    });
 script_runner.run()
+
+Object.assign(
+   unsafeWindow,
+   {
+      reader: reader
+   }
+)
