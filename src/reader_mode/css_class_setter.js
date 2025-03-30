@@ -68,9 +68,9 @@ export class CssClassSetter {
    AddOverridingClass(node, class_name, is_default = true, are_children = false) {
       node = this.get_class_valid_node(node)
       if (this.is_ignored(node)) return
-      class_name = this.class_name(class_name)
 
       this.AddClass(node, class_name)
+      class_name = this.class_name(class_name)
 
       let node_selector = this.get_node_highpriority_selector(node, class_name, are_children)
       let style = this.get_style_by_node(node, node_selector)
@@ -80,7 +80,7 @@ export class CssClassSetter {
          rule_body = this.rule_helper.union_rules([this.class_name('default'), class_name])
       else {
          let rule = this.rule_helper.get_rule(class_name)
-         [_, rule_body] = this.rule_helper.split_rule(rule.cssText)
+         rule_body = this.rule_helper.split_rule(rule.cssText)[1]
       }
       style.textContent = node_selector + rule_body
    }
@@ -110,7 +110,7 @@ export class CssClassSetter {
 
       if (!this.created_styles[class_name]) return
       let new_rule_body = this.rule_helper.get_rule_body_no_bracket(rule)
-      z
+
       for (let style of this.create_styles[class_name]) {
          style.textContent = style.textContent.replace(old_rule_body, new_rule_body)
       }
@@ -195,7 +195,7 @@ export class CssClassSetter {
       if (class_name)
          selector += '.' + class_name
       if (are_children)
-         selector = this.add_children(children)
+         selector = this.add_children(selector)
       return selector
    }
 
@@ -207,13 +207,13 @@ export class CssClassSetter {
    }
 
    get_style_by_node(node, node_selector) {
-      let style_map = this.created_styles[node_selector]
-      if (!style_map)
+      if (!this.created_styles[node_selector])
          this.created_styles[node_selector] = new Map()
+      let style_map = this.created_styles[node_selector]
       if (!style_map.has(node)) {
          let style = document.createElement("style")
          document.head.appendChild(style)
-         style_map.add(node, style)
+         style_map.set(node, style)
          style.setAttribute("id", node_selector.replaceAll(/[#\.\->\* ]/g, '_'))
       }
       return style_map.get(node)

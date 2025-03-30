@@ -1,6 +1,6 @@
 import { delay } from '../util/common.js'
 import { createWorker, createScheduler } from 'tesseract.js';
-// @require      file://wsl$/Ubuntu/home/alex/p/js/browser_scripts/dist/kakao_saver.js
+
 function is_cover() {
    let root = [...document.querySelectorAll('div')].filter(x => x.shadowRoot)
    if (root.length === 0) return null
@@ -153,6 +153,7 @@ class Scrapper {
       while (true) {
          if (!get_next_btn()) {
             this.log('no next_btn')
+            await delay(200)
             continue
          }
 
