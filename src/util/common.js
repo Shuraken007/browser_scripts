@@ -134,12 +134,6 @@ export function toArr(item) {
    return item
 }
 
-export function get_pct_diff(v1, v2) {
-   let max = Math.max(v1, v2)
-   let diff = Math.abs(v1 - v2)
-   return diff / max * 100
-
-}
 
 export function obj_true_length(obj) {
    return Object.values(obj).filter(v => v == true).length

@@ -10,6 +10,7 @@ import { ImageLoader } from "./image_loader.js"
 import { PageAnalyzer } from './page_analyser.js'
 import { ImageSetter } from './image_setter.js'
 import { CssClassSetter } from './css_class_setter.js'
+import { TextFixer } from './text_fixer.js'
 
 let script_runner;
 
@@ -22,13 +23,14 @@ class Reader {
       this.image_loader = null
       this.image_setter = null
       this.css_class_setter = null
+      this.text_fixer = null
 
       this.loaded_config = null
       this.config_by_url = null
       this.config = null
 
       this.any_url_matched = false
-      this.is_runned = false
+      this.on = false
 
       this.init_promise = this.init()
       this.onResizeCall = () => { this.onResize() }
@@ -51,13 +53,26 @@ class Reader {
       // prepare config - take only sections with passed url, merge them
       let config = structuredClone(this.loaded_config.common)
       this.any_url_matched = false
+      let suited_keys = []
       for (let [k, v] of Object.entries(this.loaded_config)) {
          if (k === 'common') continue
          let url_regex = util.urlToRegex(v.url);
          if (!url_regex.test(window.location.href))
             continue;
          this.any_url_matched = true
-         util.merge_obj(config, v)
+         suited_keys.push(k)
+         if (!v.hasOwnProperty('is_reader'))
+            v.is_reader = true
+         if (!v.hasOwnProperty('is_wallpaper'))
+            v.is_wallpaper = true
+      }
+      suited_keys.sort((a, b) => {
+         let l_a = this.loaded_config[a].url.length
+         let l_b = this.loaded_config[b].url.length
+         return l_a - l_b
+      })
+      for (let key of suited_keys) {
+         util.merge_obj(config, this.loaded_config[key])
       }
       return config
    }
@@ -98,10 +113,10 @@ class Reader {
    run() {
       if (!this.image_loader.is_on() && this.config.is_wallpaper !== false)
          this.image_loader.run()
-      if (this.is_runned)
+      if (this.on)
          return
-      this.is_runned = true
-      this.sync_session.run()
+      this.on = true
+      // this.sync_session.run()
       this.image_setter.run()
       window.addEventListener("resize", this.onResizeCall);
       if (this.config.next)
@@ -109,24 +124,23 @@ class Reader {
    }
 
    stop() {
-      if (!this.is_runned)
+      if (!this.on)
          return
-      this.is_runned = false
+      this.on = false
       this.sync_session.stop()
       this.image_loader.stop()
       this.image_setter.stop()
-      if (script_runner)
-         script_runner.stop()
+      this.css_class_setter.ResetClasses()
       window.removeEventListener("resize", this.onResizeCall);
       window.removeEventListener("scroll", this.onScrollCall);
    }
 
    async onLoad() {
       this.config = this.build_config_by_width(this.config_by_url)
-
       this.css_class_setter = new CssClassSetter(this.config.ignore)
       this.page_analyser = new PageAnalyzer(this.config)
-      this.image_setter = new ImageSetter(this.config, this.page_analyser)
+      this.text_fixer = new TextFixer(this.page_analyser)
+      this.image_setter = new ImageSetter(this.config, this.page_analyser, this.css_class_setter)
       this.image_loader = new ImageLoader({
          config: this.config.wallpapers,
          onUpdate: (image) => { this.set_image(image) },
@@ -141,7 +155,8 @@ class Reader {
       await this.onMutation()
    }
 
-   onResize() {
+   async onResize() {
+      await util.delay(200) // prevent bugs
       let new_config = this.build_config_by_width(this.config_by_url)
       if (!util.are_obj_equal(this.config, new_config)) {
          this.config = new_config
@@ -154,6 +169,11 @@ class Reader {
       this.onMutation()
    }
 
+   onPageAnalyzerDivsChanged() {
+      this.css_class_setter.ResetClasses()
+      this.update_css()
+   }
+
    async onReload() {
       // await this.init()
       // await this.onLoad()
@@ -162,12 +182,16 @@ class Reader {
 
    async onUrlUpdate() {
       this.config_by_url = this.build_config_by_url()
-      if (!this.any_url_matched)
-         return this.stop()
-      this.onResize()
+      if (this.any_url_matched) {
+         this.run()
+         this.onResize()
+      } else {
+         this.stop()
+      }
    }
 
-   onError() {
+   onError(err) {
+      console.log(err)
       this.image_loader.onError()
       this.cache_url_loader.onError()
    }
@@ -199,12 +223,17 @@ class Reader {
       if (conf.is_reader === false)
          return
 
-      let divs = this.page_analyser.get_divs()
+      let [divs, is_update] = this.page_analyser.getDivs()
+      if (is_update) {
+         this.onPageAnalyzerDivsChanged()
+         this.page_analyser.resetUpdate()
+      }
       if (divs.length === 0)
          return
+
       this.add_div_css(divs);
       this.add_body_css()
-      this.fix_text()
+      this.text_fixer.run()
    }
 
    async add_div_css(divs) {
@@ -240,28 +269,6 @@ class Reader {
       this.css_class_setter.AddOverridingClass(document.body, 'body', false)
    }
 
-   fix_text() {
-      let torn_out_nodes = this.page_analyser.get_torn_out_nodes()
-      for (let [node, parent] of torn_out_nodes)
-         this.join_sentence(node, parent)
-   }
-
-   join_sentence(node, parent) {
-      let parent_text_nodes = d_util.get_text_nodes(parent)
-      let text = parent_text_nodes.map(x => x.textContent)
-      let final_sentence = text.join("")
-      let is_text_inserted = false
-
-      for (let text_node of parent_text_nodes) {
-         if (!is_text_inserted && node !== text_node) {
-            text_node.textContent = final_sentence
-            is_text_inserted = true
-            continue
-         }
-         text_node.parentNode.removeChild(text_node)
-      }
-   }
-
    async set_image(image) {
       await this.image_setter.set(image)
    }
@@ -282,9 +289,7 @@ await reader.init_promise;
 script_runner = new ScriptRunner(
    {
       name: "reader_mode",
-      onLoad: async () => { await reader.onLoad() },
-      onMutation: async () => { await reader.onMutation() },
-      onUrlUpdate: async () => { return await reader.onUrlUpdate() },
+      script: reader,
       mutation_mode: mutation_modes.once_per_bunch,
    });
 script_runner.run()
@@ -292,6 +297,7 @@ script_runner.run()
 Object.assign(
    unsafeWindow,
    {
-      reader: reader
+      reader: reader,
+      get_text_nodes: d_util.get_text_nodes,
    }
 )

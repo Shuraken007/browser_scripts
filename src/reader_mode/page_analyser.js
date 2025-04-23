@@ -1,104 +1,167 @@
-import { get_pct_diff } from "../util/common.js"
-import { get_text_nodes, get_node_parents } from '../util/dom.js'
+import { get_text_nodes, get_node_parents, get_node_parent, is_node_in } from '../util/dom.js'
 import { jq, get_elements_by_query_arr } from '../util/jq.js'
 import { get_absolute_bound_rect } from '../util/window.js'
+
+class DivStorage {
+   constructor() {
+      this.div = null
+      this.div_old = null
+      this.is_updated = true
+   }
+
+   get() {
+      return this.div
+   }
+
+   set(div) {
+      if (div === this.div) return
+      this.div_old = this.div
+      this.div = div
+      if (this.div_old) {
+         this.is_updated = true
+      }
+   }
+
+   reset_update() {
+      this.is_updated = false
+   }
+}
 
 export class PageAnalyzer {
    constructor(config) {
       this.config = config
+
+      this.reset_on_update = false
       this.url = window.location.href
-      this.last_state = null
-      this._refresh_state()
-   }
+      this.text_nodes_amount = 0
 
-   init(config) {
-      let is_updated = false
-
-      if (this.content_div_query !== config.content_div) {
-         is_updated = true
-         this.content_div_query = config.content_div
-      }
-      if (this.comment_div_query !== config.comment_div) {
-         is_updated = true
-         this.comment_div_query = config.comment_div
-      }
-      if (this.ignore_query !== config.ignore) {
-         is_updated = true
-         this.ignore_query = config.ignore
-      }
-      return is_updated
+      this.known_keys = ['content', 'comment']
+      this.divs = {}
+      for (let key of this.known_keys)
+         this.divs[key] = new DivStorage()
    }
 
    onReload(config) {
-      if (this.init(config))
-         this._refresh_state()
+      this.config = config
+      this.reset_on_update = true
    }
 
-   get_divs() {
+   getDivs() {
+      this.update_divs()
+      let is_updated = false
       let divs = []
-      for (let div of [this.get_content_div(), this.get_comment_div()]) {
-         if (!div)
-            break
-         divs.push(div)
+      for (let key of this.known_keys) {
+         let div = this.divs[key].get()
+         if (div)
+            divs.push(div)
+         is_updated ||= this.divs[key].is_updated
       }
-      return divs
+      return [divs, is_updated]
    }
 
-   get_content_div() {
-      let div = this._get_last_div('content_div')
-      if (div)
-         return div
-
-      if (this.content_div_query) {
-         div = jq(this.content_div_query);
-         if (div.length > 0)
-            return div.get(0)
-      }
-
-      let divs_with_text = this._get_divs_with_text()
-      if (divs_with_text.length > 0) {
-         div = divs_with_text[0][0]
-      }
-      if (div)
-         this.last_state.content_div = { div: div, first_child: div.firstChild }
-
-      return div
+   resetUpdate() {
+      for (let key of this.known_keys)
+         this.divs[key].reset_update()
    }
 
-   get_comment_div() {
-      let div = this._get_last_div('comment_div')
-      if (div)
-         return div
-      let content_div = this._get_last_div('content_div') || this.get_content_div()
-
-      if (this.comment_div_query) {
-         div = jq(this.comment_div_query);
-         if (div.length > 0)
-            return div.get(0)
+   getTornOutNodes() {
+      let content_div = this.divs['content'].get()
+      if (!content_div) return
+      let text_nodes = get_text_nodes(content_div)
+      let nodes = new Set()
+      for (let node of text_nodes) {
+         if (!this.is_text_node_styled(node, content_div)) continue
+         let parent = this.get_nearest_sentence_container(node)
+         if (!parent) continue
+         if (get_text_nodes(parent).length === 1) continue
+         nodes.add(parent)
       }
+      return [...nodes]
+   }
+
+   getParagraphs() {
+      let content_div = this.divs['content'].get()
+      if (!content_div) return
+
+      let text_nodes = get_text_nodes(content_div)
+      let paragraphs = new Set()
+      for (let node of text_nodes) {
+         let paragraph = get_node_parent(node, 'P')
+         if (paragraph) {
+            paragraphs.add(paragraph)
+         }
+      }
+      return [...paragraphs]
+   }
+
+   update_divs() {
+      let text_nodes = get_text_nodes(document.body)
+      let is_reset = this.is_reset(text_nodes)
+      this.text_nodes_amount = text_nodes.length
+      this.reset_on_update = false
+      this.url = window.location.href
+
+      for (let key of this.known_keys) {
+         if (!is_reset && this.divs[key].get())
+            continue
+         let query = this.config[`${key}_div`]
+         if (query) {
+            let div = jq(query)
+            if (div.length > 0) {
+               this.divs[key].set(div.get(0))
+               continue
+            }
+         }
+         let div = this[key](text_nodes)
+         this.divs[key].set(div)
+      }
+   }
+
+   is_new_url() {
+      if (this.url !== window.location.href)
+         return true
+      return false
+   }
+
+   is_reset(text_nodes) {
+      if (this.reset_on_update)
+         return true
+      if (this.is_new_url())
+         return true
+      if (text_nodes.length !== this.text_nodes_amount)
+         return true
+      return false
+   }
+
+   content(text_nodes) {
+      let divs_with_text = this.get_divs_with_text(text_nodes)
+      if (divs_with_text.length === 0)
+         return null
+      return divs_with_text[0][0]
+   }
+
+   comment() {
+      let content_div = this.divs['content'].get()
 
       let comments = document.querySelectorAll('div[class*="comment"]')
+      let div
       for (let comment of comments) {
-         if (!this._is_comment_div(content_div, comment)) continue
+         if (!this.is_comment_div(content_div, comment)) continue
          div = comment
       }
 
       if (!div) return null
 
       for (let parent of get_node_parents(div)) {
-         if (!this._is_comment_div(content_div, parent))
+         if (!this.is_comment_div(content_div, parent))
             break
          div = parent
-      }
-
-      if (div) {
-         this.last_state.comment_div = { div: div, first_child: div.firstChild }
       }
 
       return div
    }
 
-   _is_comment_div(content_div, comment_div) {
+   is_comment_div(content_div, comment_div) {
       let allowed_diff_pct = 2
       let content_rect = get_absolute_bound_rect(content_div)
       let div_rect = get_absolute_bound_rect(comment_div)
@@ -108,18 +171,16 @@ export class PageAnalyzer {
       return false
    }
 
-   _get_divs_with_text() {
-      let text_nodes = get_text_nodes(document.body)
-      let ignore_divs = get_elements_by_query_arr(this.ignore_query)
+   get_divs_with_text(text_nodes) {
+      let ignore_divs = get_elements_by_query_arr(this.config.ignore)
 
-      this.last_state.text_nodes_amount = text_nodes.length
       let divs = new Map();
       for (let node of text_nodes) {
+         if (is_node_in(node, ignore_divs)) continue
          for (let parent of get_node_parents(node)) {
             if (parent.tagName !== 'DIV')
                continue
-            if (ignore_divs.includes(parent))
-               break
+            if (is_node_in(parent, ignore_divs)) continue
             let other_nodes_contained = false
             for (let child of text_nodes) {
                if (child === node) continue
@@ -138,33 +199,6 @@ export class PageAnalyzer {
       return sorted_divs
    }
 
-   _refresh_state() {
-      this.last_state = {
-         url: window.location.href,
-         text_nodes_amount: 0,
-         content_div: { div: null, firstChild: null },
-         comment_div: { div: null, firstChild: null },
-      }
-   }
-
-   _check_url() {
-      if (this.last_state.url !== window.location.href)
-         this._refresh_state()
-   }
-
-   _get_last_div(div_name) {
-      this._check_url()
-      let div = this.last_state[div_name].div
-      if (!div) return null
-      let text_nodes = get_text_nodes(document.body)
-      if (text_nodes.length !== this.last_state.text_nodes_amount)
-         return null
-      if (this.last_state[div_name].first_child !== div.firstChild) {
-         return null
-      }
-      return this.last_state[div_name].div
-   }
-
    is_text_node_styled(node, content_div, styles = ["EM", "I"]) {
       if (node.tagName === "P") return false
       while (node !== content_div && !["P", "DIV"].includes(node.tagName)) {
@@ -175,30 +209,16 @@ export class PageAnalyzer {
    }
 
    get_nearest_sentence_container(node) {
-      let content_div = this.get_content_div()
+      let content_div = this.divs['content'].get()
       if (!content_div) return null
       while (node !== content_div && !["P", "DIV"].includes(node.tagName)) {
-         if (get_text_nodes(node).length > 1) break
          node = node.parentNode
       }
       if (node === content_div)
          return null
+      if (get_text_nodes(node).length <= 1)
+         return null
       return node
-   }
-
-   get_torn_out_nodes() {
-      let content_div = this.get_content_div()
-      if (!content_div) return
-      let text_nodes = get_text_nodes(content_div)
-      let nodes = []
-      for (let node of text_nodes) {
-         if (!this.is_text_node_styled(node, content_div)) continue
-         let parent = this.get_nearest_sentence_container(node)
-         if (!parent) continue
-         if (get_text_nodes(parent).length === 1) continue
-         nodes.push([node, parent])
-      }
-      return nodes
    }
 
 }

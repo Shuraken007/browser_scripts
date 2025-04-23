@@ -6,34 +6,56 @@ export const mutation_modes = {
    once_per_bunch: "once_per_bunc"
 }
 
+// script support: onLoad, onMutation, onUrlUpdate, onError
 export class ScriptRunner {
-   constructor({ name, onLoad, onMutation, onError, onUrlUpdate, mutation_mode = mutation_modes.each_mutation }) {
-      this.onLoad = onLoad
-      this.onError = onError
-      this.onMutation = onMutation
-      this.onUrlUpdate = onUrlUpdate
+   constructor({ script, name, mutation_mode = mutation_modes.each_mutation }) {
+      this.script = script
       this.name = name
-      this.on = true
+      this.on = script.on
+
       this.last_url = window.location.href
-      this.check_delta_ms = 100
+      this.update_delta_ms = 200
 
       this.script_start = Date.now()
       this.max_wait_ready_ms = 10000
-      setTimeout(() => { this.check_url_changed() }, this.check_delta_ms);
+      setTimeout(() => { this.update() }, this.update_delta_ms);
 
       if (mutation_mode === mutation_modes.each_mutation) {
          this.observer = new MutationObserver(
             (mutations) => { this.run_each_mutation(mutations) }
          );
       } else if (mutation_mode === mutation_modes.once_per_bunch) {
-         this.observer = new MutationObserver(
-            (mutations) => { this.run_mutations_once(mutations) }
-         );
-         this.is_mutation_blocked = false
-         this.mutations_delta_ms = 100
-         this.block_occured = false
-         setTimeout(() => { this.check_block_occured() }, this.check_delta_ms);
+         this.runMutationsOnceCall = () => { this.run_mutations_once() }
+         this.observer = new MutationObserver(this.runMutationsOnceCall);
+         this.min_wait_after_mutation_ms = 200
+         this.max_wait_after_mutation_ms = 1000
+         this.last_mutation_time = null
+         this.last_mutation_runned = null
+         this.is_mutation_delayed = false
       }
+   }
+
+   async update() {
+      setTimeout(() => { this.update() }, this.update_delta_ms);
+      await this.check_url()
+      if (this.on === this.script.on) return
+      if (this.script.on) {
+         this.on = true
+         this.ob_connect()
+      } else {
+         this.on = false
+         this.ob_disconnect()
+      }
+   }
+
+   async check_url() {
+      let cur_url = window.location.href
+      if (this.last_url === cur_url) return
+      this.last_url = cur_url
+      this.run_once_more = false
+      // if (this.is_mutation_ready)
+      setTimeout(this.runMutationsOnceCall, 300)
+      await this.safe_call('onUrlUpdate')
    }
 
    ob_disconnect() {
@@ -47,12 +69,12 @@ export class ScriptRunner {
 
    // local storages should be reset to avoid bugs
    async safe_call(call, args = []) {
+      if (!this.script[call]) return
       try {
-         let is_success = await call(...args)
-         return is_success
+         await this.script[call](...args)
       } catch (err) {
-         if (this.onError)
-            await this.onError(err)
+         if (!this.script.onError) return
+         await this.script.onError(err)
          throw err
       }
    }
@@ -62,52 +84,43 @@ export class ScriptRunner {
       for (const mutation of mutations) {
          if (mutation.type !== "childList") continue
          for (const node of mutation.addedNodes) {
-            await this.safe_call(this.onMutation, [node])
+            await this.safe_call('onMutation', [node])
          }
       }
       this.ob_connect();
    }
 
-   check_block_occured() {
-      setTimeout(() => { this.check_block_occured() }, this.check_delta_ms);
-      if (!this.block_occured)
-         return
-      if (this.is_mutation_blocked)
-         return
-      this.block_occured = false
-      this.run_mutations_once()
+   is_mutation_ready(cur_time = Date.now()) {
+      let res = false
+      if (!this.last_mutation_time)
+         this.last_mutation_time = cur_time
+      if (cur_time - this.last_mutation_runned > this.max_wait_after_mutation)
+         res = true
+      else if (cur_time - this.last_mutation_time > this.min_wait_after_mutation_ms)
+         res = true
+      this.last_mutation_time = cur_time
+      return res
    }
 
-   async check_url_changed() {
-      setTimeout(() => { this.check_url_changed() }, this.check_delta_ms);
-      let cur_url = window.location.href
-      if (this.last_url === cur_url) return
-      this.last_url = cur_url
-      if (!this.onUrlUpdate) return
-
-      let is_success = await this.safe_call(this.onUrlUpdate)
-      if (is_success && !this.on) {
-         this.on = true
-         this.ob_connect()
-      }
-   }
-
-   run_mutations_once(mutations) {
-      if (this.is_mutation_blocked) {
-         this.block_occured = true
+   async run_mutations_once(mutations) {
+      let cur_time = Date.now()
+      let is_ready = this.is_mutation_ready(cur_time)
+      if (!is_ready) {
+         if (this.is_mutation_delayed)
+            return
+         setTimeout(this.runMutationsOnceCall, this.min_wait_after_mutation_ms)
+         this.is_mutation_delayed = true
          return
       }
-      this.is_mutation_blocked = true
-
-      setTimeout(
-         async () => {
-            // this.ob_disconnect();
-            await this.safe_call(this.onMutation)
-            // this.ob_connect();
-            this.is_mutation_blocked = false
-         },
-         this.mutations_delta_ms
-      );
+      if (!this.run_once_more) {
+         this.run_once_more = true
+         setTimeout(this.runMutationsOnceCall, 200)
+      }
+      this.is_mutation_delayed = false
+      // console.log(`+ ${cur_time - this.script_start}`)
+      this.ob_disconnect();
+      await this.safe_call('onMutation')
+      this.ob_connect();
    }
 
    async is_ready() {
@@ -116,11 +129,10 @@ export class ScriptRunner {
          await delay(20)
          script_end = Date.now()
          if (script_end - this.script_start > this.max_wait_ready_ms) {
-            console.log(`script_runner ${this.name}: document failed load over ${script_end - this.script_start} ms`);
             return false
          }
       }
-      if (script_end - this.script_start > 1000)
+      if (script_end - this.script_start > 2000)
          console.log(`script_runner ${this.name}: document load over ${script_end - this.script_start} ms`);
 
       return true
@@ -129,14 +141,10 @@ export class ScriptRunner {
    async run() {
       let is_ready = await this.is_ready()
       if (!is_ready) return
-      await this.safe_call(this.onLoad)
 
+      await this.safe_call('onLoad')
+      if (!this.script.on) return
       this.ob_connect()
-   }
-
-   stop() {
-      this.on = false
-      this.ob_disconnect()
    }
 
 }

@@ -2,7 +2,6 @@ import { isImage } from '../util/common.js'
 import * as w_util from '../util/window.js'
 import { get_node_parents } from '../util/dom.js'
 import { jq } from '../util/jq.js'
-import { add_css_class, set_element_property, css_name } from '../util/css.js'
 class ImageCalc {
    constructor() {
       this.image = null
@@ -51,6 +50,10 @@ class ImageCalc {
 
       let ph = w_util.ph()
       let wh = w_util.wh()
+      if (ph === wh) {
+         setTimeout(() => { this.get_paralax_k() }, 100)
+         return 0
+      }
       return (this.h - wh) / (ph - wh)
    }
 
@@ -71,11 +74,12 @@ class ImageCalc {
 
 const image_div_name = 'userscript_reader_mode_image_div'
 export class ImageSetter {
-   constructor(config, page_analyser) {
+   constructor(config, page_analyser, css_class_setter) {
       this.image = null;
 
       this.config = config
       this.page_analyser = page_analyser
+      this.css_class_setter = css_class_setter
       this.image_calc = new ImageCalc()
       this.image_div = this.create_image_div()
       this.onScrollCall = () => { this.onScroll() }
@@ -83,10 +87,12 @@ export class ImageSetter {
 
    run() {
       window.addEventListener("scroll", this.onScrollCall);
+      this.image_div.style.opacity = 'block'
    }
 
    stop() {
       window.removeEventListener("scroll", this.onScrollCall);
+      this.image_div.style.opacity = 'none'
    }
 
    set(image) {
@@ -100,11 +106,11 @@ export class ImageSetter {
          this.image_div.removeChild(this.image)
       this.image_div.appendChild(image)
       this.image = image
-      add_css_class(image, css_name('image'))
+      this.css_class_setter.AddClass(image, 'image', false)
       this.onResize()
       this.onScroll()
       this.remove_original_bg_images()
-      this.run_animation()
+      // this.run_animation()
    }
 
    onReload(config) {
@@ -115,10 +121,13 @@ export class ImageSetter {
       if (!this.image)
          return
       this.image_calc.onResize()
-      set_element_property(this.image_div, {
-         width: w_util.ww(),
-         height: w_util.wh(),
-      })
+      this.css_class_setter.AddNodeStyle(
+         this.image_div,
+         {
+            width: w_util.ww(),
+            height: w_util.wh(),
+         }
+      )
 
       let height = "auto"
       let width = "auto"
@@ -127,10 +136,13 @@ export class ImageSetter {
       } else {
          width = w_util.ww() + "px"
       }
-      set_element_property(this.image, {
-         width: width,
-         height: height,
-      })
+      this.css_class_setter.AddNodeStyle(
+         this.image,
+         {
+            width: width,
+            height: height,
+         }
+      )
 
       let img_shift = w_util.get_absolute_bound_rect(this.image).left
       let w_diff = this.image.clientWidth - w_util.ww()
@@ -148,7 +160,7 @@ export class ImageSetter {
          div.setAttribute("id", image_div_name);
          document.body.prepend(div);
       }
-      add_css_class(div, css_name('image_div'))
+      this.css_class_setter.AddClass(div, 'image_div', false)
       return div
    }
 
@@ -180,7 +192,7 @@ export class ImageSetter {
    }
 
    async run_animation() {
-      let divs = this.page_analyser.get_divs()
+      let [divs,] = this.page_analyser.getDivs()
       if (divs.length === 0)
          return
 

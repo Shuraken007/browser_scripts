@@ -1,5 +1,5 @@
 import { isEmpty } from "../util/common.js"
-import { get_node_parents } from "../util/dom.js"
+import { get_node_parents, is_node_in } from "../util/dom.js"
 import { get_elements_by_query_arr } from "../util/jq.js"
 
 class RuleHelper {
@@ -54,20 +54,23 @@ export class CssClassSetter {
       this.class_prefix = 'userscript_reader_mode_'
    }
 
-   AddClass(node, class_name) {
+   AddClass(node, class_name, is_save = true) {
       node = this.get_class_valid_node(node)
-      if (this.is_ignored(node)) return
+      let ignored = get_elements_by_query_arr(this.ignore_nodes)
+      if (is_node_in(node, ignored)) return
       class_name = this.class_name(class_name)
-
       if (node.classList.contains(class_name))
          return
       node.classList.add(class_name)
-      this.nodes_class_added.add(node)
+      if (is_save)
+         this.nodes_class_added.add(node)
    }
 
    AddOverridingClass(node, class_name, is_default = true, are_children = false) {
       node = this.get_class_valid_node(node)
-      if (this.is_ignored(node)) return
+
+      let ignored = get_elements_by_query_arr(this.ignore_nodes)
+      if (is_node_in(node, ignored)) return
 
       this.AddClass(node, class_name)
       class_name = this.class_name(class_name)
@@ -93,8 +96,8 @@ export class CssClassSetter {
       for (let [k, v] of Object.entries(props)) {
          let key = k.toString()
          if (!saved_changes.hasOwnProperty(key))
-            saved_changes[key] = element.style[key];
-         element.style[key] = v;
+            saved_changes[key] = node.style[key];
+         node.style[key] = v;
       }
    }
 
@@ -157,14 +160,6 @@ export class CssClassSetter {
 
    class_name(name) {
       return this.class_prefix + name
-   }
-
-   is_ignored(node) {
-      let i_nodes = get_elements_by_query_arr(this.ignore_nodes)
-      if (i_nodes.includes(node)) return true
-      for (let i_node of i_nodes)
-         if (i_node.contains(node)) return true
-      return false
    }
 
    get_classes_selector(node) {

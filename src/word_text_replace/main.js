@@ -139,10 +139,11 @@ class Replacer {
       // console.log("config loaded!");
       if (!this.replacements || this.replacements.length == 0) {
          console.log("no replacements for this site!");
+         this.on = false
          return;
       }
       // console.log(this.replacements)
-      this.replace();
+      this.onMutation();
 
       window.addEventListener('click',
          event => this.click_detector.on_click(event));
@@ -151,8 +152,11 @@ class Replacer {
       this.builder.cache_url_loader.use_cache = false
    }
 
-   replace(node = document.body) {
+   onMutation(node = document.body) {
       if (!this.on) return;
+      // extra check, when childs still not loaded and tagName is unknown
+      if (node.parentNode && node.parentNode.tagName && node.parentNode.tagName === 'SCRIPT')
+         return
       replaceText(node, this.replacements, this.replaced_nodes, this);
    }
 
@@ -169,7 +173,7 @@ class Replacer {
          this.on = false
       } else {
          this.on = true
-         this.replace()
+         this.onMutation()
       }
    }
 
@@ -178,7 +182,7 @@ class Replacer {
          .catch(err => { this.onError(err) });
       this.revert_nodes();
       // console.log(this.replacements)
-      this.replace();
+      this.onMutation();
    }
 
    onError(err) {
@@ -194,8 +198,6 @@ await replacer.init();
 let script_runner = new ScriptRunner(
    {
       name: "word_text_replace",
-      onLoad: async () => { await replacer.onLoad() },
-      onMutation: async (node) => { await replacer.replace(node) },
-      onError: async (err) => { await replacer.onError(err) },
+      script: replacer,
    });
 script_runner.run()
