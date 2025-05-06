@@ -13,6 +13,9 @@ export function get_text_nodes(node, is_visible = true, is_trimmed = false, all_
       case Node.ELEMENT_NODE:
          if (node.tagName === "BR" && node.hasAttribute("data-immersive-translate-walked"))
             break;
+         if (node.tagName === "BR" && node.parentNode
+            && node.parentNode.hasAttribute("data-immersive-translate-translation-element-mark"))
+            break;
          if (node.tagName === "BR")
             all_nodes.push(node)
          else

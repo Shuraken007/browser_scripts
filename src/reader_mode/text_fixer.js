@@ -8,6 +8,8 @@ export class TextFixer {
    run() {
       let paragraphs = this.page_analyser.getParagraphs()
       for (let paragraph of paragraphs) {
+         // if (paragraph.hasAttribute("data-immersive-translate-walked"))
+         //    continue
          this.remove_duplicate_br(paragraph)
          this.add_extra_para
       }
