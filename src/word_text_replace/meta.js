@@ -1,6 +1,6 @@
 // ==UserScript==
 // @run-at        document-start
-INCLUDE_HTTP
+BOOK_INCLUDE_HTTP
 // @name         Word Text Replace
 // @namespace    http://tampermonkey.net/
 // @version      2.9

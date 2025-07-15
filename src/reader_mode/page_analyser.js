@@ -1,5 +1,5 @@
 import { get_text_nodes, get_node_parents, get_node_parent, is_node_in } from '../util/dom.js'
-import { jq, get_elements_by_query_arr } from '../util/jq.js'
+import { jq, jqs } from '../util/jq.js'
 import { get_absolute_bound_rect } from '../util/window.js'
 
 class DivStorage {
@@ -86,7 +86,7 @@ export class PageAnalyzer {
       let text_nodes = get_text_nodes(content_div)
       let paragraphs = new Set()
       for (let node of text_nodes) {
-         let paragraph = get_node_parent(node, 'P')
+         let paragraph = get_node_parent(node, 'P') || get_node_parent(node, 'SPAN')
          if (paragraph) {
             paragraphs.add(paragraph)
          }
@@ -106,7 +106,7 @@ export class PageAnalyzer {
             continue
          let query = this.config[`${key}_div`]
          if (query) {
-            let div = jq(query)
+            let div = jq(query)[0]
             if (div.length > 0) {
                this.divs[key].set(div.get(0))
                continue
@@ -172,7 +172,7 @@ export class PageAnalyzer {
    }
 
    get_divs_with_text(text_nodes) {
-      let ignore_divs = get_elements_by_query_arr(this.config.ignore)
+      let ignore_divs = jqs(this.config.ignore)
 
       let divs = new Map();
       for (let node of text_nodes) {

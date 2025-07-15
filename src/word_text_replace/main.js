@@ -93,6 +93,12 @@ class Replacer {
    constructor() {
       this.on = true;
       this.cache_url_loader = new CacheUrlLoader();
+      this.config = null
+      this.chinese_convertor = null
+      this.builder = null
+      this.click_detector = null
+      this.promised_replacements = null
+
       this.replaced_nodes = new Map();
       this.replacements = null;
    }

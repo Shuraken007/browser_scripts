@@ -1,6 +1,6 @@
 import { isEmpty } from "../util/common.js"
 import { get_node_parents, is_node_in } from "../util/dom.js"
-import { get_elements_by_query_arr } from "../util/jq.js"
+import { jqs } from "../util/jq.js"
 
 class RuleHelper {
    constructor() {
@@ -56,7 +56,7 @@ export class CssClassSetter {
 
    AddClass(node, class_name, is_save = true) {
       node = this.get_class_valid_node(node)
-      let ignored = get_elements_by_query_arr(this.ignore_nodes)
+      let ignored = jqs(this.ignore_nodes)
       if (is_node_in(node, ignored)) return
       class_name = this.class_name(class_name)
       if (node.classList.contains(class_name))
@@ -69,7 +69,7 @@ export class CssClassSetter {
    AddOverridingClass(node, class_name, is_default = true, are_children = false) {
       node = this.get_class_valid_node(node)
 
-      let ignored = get_elements_by_query_arr(this.ignore_nodes)
+      let ignored = jqs(this.ignore_nodes)
       if (is_node_in(node, ignored)) return
 
       this.AddClass(node, class_name)

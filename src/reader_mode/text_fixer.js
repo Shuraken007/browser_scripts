@@ -7,16 +7,15 @@ export class TextFixer {
 
    run() {
       let paragraphs = this.page_analyser.getParagraphs()
+
       for (let paragraph of paragraphs) {
-         // if (paragraph.hasAttribute("data-immersive-translate-walked"))
-         //    continue
          this.remove_duplicate_br(paragraph)
-         this.add_extra_para
       }
       this.join()
    }
 
    remove_duplicate_br(paragraph) {
+      this.try_remove_sibling_br(paragraph)
       let nodes = d_util.get_text_nodes(paragraph, true, true)
       let is_empty = false
       let is_text_started = false
@@ -35,6 +34,17 @@ export class TextFixer {
          node.parentNode.removeChild(node)
          is_empty = false
       }
+      if (paragraph.hasAttribute("style")) {
+         paragraph.removeAttribute("style")
+      }
+   }
+
+   try_remove_sibling_br(paragraph) {
+      let sibling = paragraph.nextSibling
+      if (!(sibling && sibling.tagName)) return
+      if (sibling.tagName !== "BR") return
+      sibling.parentNode.removeChild(sibling)
+      console.log('remobed')
    }
 
    add_paragraph(paragraph, cur_node) {
@@ -47,7 +57,7 @@ export class TextFixer {
          }
          if (!node.parentNode)
             continue
-         let child = d_util.get_node_parent_before(node, 'P')
+         let child = d_util.get_node_parent_before(node, 'P') || d_util.get_node_parent_before(node, 'SPAN')
          child.parentNode.removeChild(child)
          new_paragraph.appendChild(child)
       }

@@ -32,3 +32,37 @@ export function is_scroll_to_bottom() {
       return true
    return false
 }
+
+function is_node_in_viewport(node) {
+   const rect = node.getBoundingClientRect();
+   return (
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+      rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+   );
+}
+
+function is_node_visible(node) {
+   if (!node.checkVisibility())
+      return false
+
+   let style = window.getComputedStyle(node)
+   if (style.display === 'none')
+      return false
+   if (style.opacity === '0')
+      return false
+   if (style.visibility === 'hidden')
+      return false
+   // if (style['content-visibility'] === 'hidden')
+   //    return false
+   // if (!is_node_in_viewport(node))
+   //    return false
+
+   return true
+}
+
+export function is_visible(node) {
+   // window.getComputedStyle(el).opacity !== '0' && window.getComputedStyle(el.offsetParent).opacity !== '0'
+   return is_node_visible(node) && is_node_visible(node.offsetParent)
+}

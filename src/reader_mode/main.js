@@ -1,6 +1,6 @@
 import './style.css';
 import * as util from '../util/common.js'
-import * as j_util from '../util/jq.js'
+import { jq } from '../util/jq.js'
 import * as w_util from '../util/window.js'
 import * as d_util from '../util/dom.js'
 import { ScriptRunner, mutation_modes } from "../script_runner.js";
@@ -215,14 +215,9 @@ class Reader {
 
    prepareNewPage() {
       let conf = this.config
-      if (conf.remove)
-         conf.remove.forEach(e => j_util.jq(e).remove());
-      if (conf.hide)
-         conf.hide.forEach(e => j_util.jq(e).hide());
-
-      if (conf.is_reader === false)
+      if (conf.requires && jq(conf.requires).length === 0) {
          return
-
+      }
       let [divs, is_update] = this.page_analyser.getDivs()
       if (is_update) {
          this.onPageAnalyzerDivsChanged()
@@ -278,7 +273,7 @@ class Reader {
       if (!this.config.next) return
       let next_buttons = util.toArr(this.config.next)
       for (let query of next_buttons) {
-         let x = j_util.jq(query).get(0)
+         let x = jq(query)[0]
          if (x) x.click();
       }
    }

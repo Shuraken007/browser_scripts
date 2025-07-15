@@ -17,8 +17,9 @@
 .userscript_reader_mode_image_div {
    background-color: rgba(0, 0, 0, 0);
    position: fixed;
-   left: 50%;
-   transform: translate(-50%, 0);
+   /* left: 50%;
+   transform: translateX(-50%); */
+   /* transform: translate(-50%, 0); */
    top: 0;
    z-index: -10;
 }

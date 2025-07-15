@@ -1,49 +1,50 @@
-import jQuery from 'jquery';
+const extended_selectors = ["parent", "contains"]
+const reg_split = /^(.+?)(:(?:parent|contains).+)?$/
+const reg_calls = /:(?<call>parent|contains)\(["']?(?<arg>.*?)["']?\)/g
 
-const $ = jQuery.noConflict(true);
+// default query selector with extended calls, which added at the end of query:
+// contains: `div:contains('some_text')`
+// parent: `div:parent():parent()` - div.parentNode.parentNode
 
-function split_with_delim(str, delim, delim_as) {
-   if (!delim_as) {
-      delim_as = delim
+function jq_apply_call(nodes, call, arg) {
+   if (call === 'parent') {
+      let amount = parseInt(arg || '1', 10);
+      for (let i = 0; i < amount; i++) {
+         nodes = nodes.map(node => node.parentNode)
+      }
+   } else if (call === 'contains') {
+      nodes = nodes.filter(node => node.textContent.includes(arg))
    }
-   let arr = str.split(delim)
-   if (arr.length == 1) return arr
-   let new_arr = []
-   for (let i = 0; i < arr.length; i++) {
-      let item = arr[i]
-      if (item !== '')
-         new_arr.push(item)
-      if (i != arr.length - 1)
-         new_arr.push(delim_as)
-   }
-   return new_arr
+   return nodes
 }
 
-// allow to store parent calls in string $(".btn").parent() -> $(".btn:parent()")
-const extended_calls = ["parent"]
 export function jq(query) {
-   let splited = [query]
-   for (const e_call of extended_calls) {
-      let new_splited = []
-      for (let i = 0; i < splited.length; i++) {
-         let arr = split_with_delim(splited[i], `:${e_call}()`, e_call)
-         new_splited = new_splited.concat(arr)
-      }
-      splited = new_splited
+   let extended_calls_str = null
+   if (extended_selectors.some(sel => query.includes(sel))) {
+      let match = query.match(reg_split)
+      query = match[1]
+      extended_calls_str = match[2]
    }
-   let x = $(splited[0])
-   splited.slice(1).forEach(function (q) {
-      if (extended_calls.includes(q)) {
-         x = x[q]()
-      }
-   });
-   return x
+   if (!query) {
+      console.log(`can't split query ${query}`)
+      return null
+   }
+   let nodes = [...document.querySelectorAll(query)]
+   if (nodes.length === 0 || !extended_calls_str)
+      return nodes
+
+   for (let match of extended_calls_str.matchAll(reg_calls)) {
+      let call = match.groups.call
+      let arg = match.groups.arg
+      nodes = jq_apply_call(nodes, call, arg)
+   }
+   return nodes
 }
 
-export function get_elements_by_query_arr(query_arr = []) {
-   let elems = []
+export function jqs(query_arr = []) {
+   let nodes = []
    for (let query of query_arr) {
-      elems = elems.concat(jq(query).get())
+      nodes = nodes.concat(jq(query))
    }
-   return elems
+   return nodes
 }

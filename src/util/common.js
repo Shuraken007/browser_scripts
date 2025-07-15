@@ -62,6 +62,7 @@ export async function load(url) {
 export const types = {
    Dict: 'Dict',
    Array: 'Array',
+   RegExp: 'RegExp',
    String: 'String',
    Int: 'Int',
    Url: 'Url',
@@ -74,6 +75,7 @@ export function get_type(x) {
    if (x === null || typeof x === 'undefined') return types.Null;
    if (x instanceof Array) return types.Array;
    if (x instanceof Image) return types.Image;
+   if (x instanceof RegExp) return types.RegExp;
    if (typeof x == 'object') return types.Dict;
    if (typeof x === 'string' || x instanceof String) {
       if (x.startsWith("http"))
@@ -187,23 +189,6 @@ export function are_obj_equal(a, b) {
    return true
 }
 
-// for (const [key, node] of recurIter(json)) {...}
-// export function* recurIter(data, ignore_keys_arr = [], ignore_node_filter = null, cur_key = "entry_point") {
-//    // let type = get_type(data)
-//    if (data instanceof Array) {
-//       // if (type === types.Array) {
-//       for (const node of data) {
-//          yield* recurIter(node, ignore_keys_arr, ignore_node_filter, cur_key)
-//       }
-//    } else if (typeof data == 'object') {
-//       if (ignore_node_filter && ignore_node_filter(data, cur_key))
-//          return
-//       yield [cur_key, data]
-//       for (const [k, node] of Object.entries(data)) {
-//          if (ignore_keys_arr.includes(k)) continue
-//          yield* recurIter(node, ignore_keys_arr, ignore_node_filter, k)
-//       }
-//    } else {
-//       return
-//    }
-// }
+export function get_key_by_val(object, value) {
+   return Object.keys(object).find(key => object[key] === value);
+}

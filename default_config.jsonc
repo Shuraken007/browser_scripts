@@ -3,7 +3,7 @@
    "GIST_TOKEN": "",
    "GIST_ID": "",
    "GIST_FILE": "",
-   "INCLUDE_HTTP": [
+   "BOOK_INCLUDE_HTTP": [
       "https://ranobelib.me*",
       "https://novelbin.com*",
       "https://www.royalroad.com*",
@@ -11,6 +11,9 @@
       "https://tw.wa01.com*",
       "https://www.wa01.com*",
       "https://ranobe.me*"
+   ],
+   "SHOP_INCLUDE_HTTP": [
+      "https://av.ru*"
    ],
    "READER_MODE_CONFIG_URL": "https://api.npoint.io/ec469b350811e7bacb82",
    "WORD_TEXT_REPLACE_CONFIG_URL": "https://api.npoint.io/ec469b350811e7bacb82"

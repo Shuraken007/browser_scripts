@@ -6,7 +6,7 @@
 // @description  converting site to readable mode, must configure manually with dev tools
 // @author       Shuraken007
 
-INCLUDE_HTTP
+BOOK_INCLUDE_HTTP
 // @run-at        document-start
 // @grant          unsafeWindow
 

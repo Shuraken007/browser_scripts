@@ -356,7 +356,6 @@ export class ImageLoader {
    }
 
    async next() {
-      console.log('next')
       if (this.pointer === this.images.length - 1)
          await this.preload_images()
       this.set_pointer(this.pointer + 1)

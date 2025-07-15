@@ -22,6 +22,7 @@ export class HeadInsert {
    add_meta(assets, compilation) {
       for (let i in assets) {
          const asset = compilation.getAsset(i);  // <- standardized version of asset object
+         console.log(asset.name)
          const source = asset.source.source(); // <- standardized way of getting asset source
 
          let dir_by_asset = asset.name.replace('_min', '')
@@ -78,7 +79,14 @@ export class ConfigInsert {
       });
    }
 
-   INCLUDE_HTTP(config_val) {
+   BOOK_INCLUDE_HTTP(config_val) {
+      let res = "\n"
+      for (const val of config_val) {
+         res += `// @include ${val}\n`
+      }
+      return res
+   }
+   SHOP_INCLUDE_HTTP(config_val) {
       let res = "\n"
       for (const val of config_val) {
          res += `// @include ${val}\n`
@@ -89,13 +97,14 @@ export class ConfigInsert {
    insert_tokens(assets, compilation) {
       for (let i in assets) {
          const asset = compilation.getAsset(i);  // <- standardized version of asset object
+         // console.log(asset.name)
          const source = asset.source.source(); // <- standardized way of getting asset source
-
          let new_source = source
 
          for (const token of this.known_tokens) {
             if (!source.includes(token)) continue
             let replacement = this.config[token] || ""
+
             if (this.config[token] !== null && this[token]) {
                replacement = this[token](this.config[token])
             }

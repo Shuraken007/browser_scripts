@@ -1,6 +1,8 @@
 const exclude_node_tags = ['SCRIPT', 'STYLE', 'IFRAME']
 
 export function get_text_nodes(node, is_visible = true, is_trimmed = false, all_nodes = []) {
+   if (!node)
+      return all_nodes
    // not visible node
    if (is_visible && ![document, document.body].includes(node) && node.offsetParent === null)
       return all_nodes

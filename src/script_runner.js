@@ -41,7 +41,7 @@ export class ScriptRunner {
       if (this.on === this.script.on) return
       if (this.script.on) {
          this.on = true
-         this.ob_connect()
+         await this.ob_connect()
       } else {
          this.on = false
          this.ob_disconnect()
@@ -62,8 +62,11 @@ export class ScriptRunner {
       this.observer.disconnect()
    }
 
-   ob_connect() {
+   async ob_connect() {
       if (!this.on) return
+      this.script_start = Date.now()
+      let is_ready = await this.is_ready()
+      if (!is_ready) return
       this.observer.observe(document.body, { childList: true, subtree: true });
    }
 
@@ -87,13 +90,16 @@ export class ScriptRunner {
             await this.safe_call('onMutation', [node])
          }
       }
-      this.ob_connect();
+      await this.ob_connect();
    }
 
    is_mutation_ready(cur_time = Date.now()) {
       let res = false
-      if (!this.last_mutation_time)
+      if (!this.last_mutation_time) {
          this.last_mutation_time = cur_time
+         this.last_mutation_time = cur_time
+         return true
+      }
       if (cur_time - this.last_mutation_runned > this.max_wait_after_mutation)
          res = true
       else if (cur_time - this.last_mutation_time > this.min_wait_after_mutation_ms)
@@ -105,7 +111,9 @@ export class ScriptRunner {
    async run_mutations_once(mutations) {
       let cur_time = Date.now()
       let is_ready = this.is_mutation_ready(cur_time)
+      // console.log(`run_mutations_once ${this.name}`)
       if (!is_ready) {
+         // console.log(`not ready ${this.name}`)
          if (this.is_mutation_delayed)
             return
          setTimeout(this.runMutationsOnceCall, this.min_wait_after_mutation_ms)
@@ -120,7 +128,7 @@ export class ScriptRunner {
       // console.log(`+ ${cur_time - this.script_start}`)
       this.ob_disconnect();
       await this.safe_call('onMutation')
-      this.ob_connect();
+      await this.ob_connect();
    }
 
    async is_ready() {
@@ -141,10 +149,9 @@ export class ScriptRunner {
    async run() {
       let is_ready = await this.is_ready()
       if (!is_ready) return
-
       await this.safe_call('onLoad')
       if (!this.script.on) return
-      this.ob_connect()
+      await this.ob_connect()
    }
 
 }

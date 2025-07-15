@@ -144,11 +144,17 @@ export class ImageSetter {
          }
       )
 
-      let img_shift = w_util.get_absolute_bound_rect(this.image).left
-      let w_diff = this.image.clientWidth - w_util.ww()
-      let expected_shift = Math.ceil(w_diff / 2)
-      if (img_shift !== expected_shift)
-         this.image.style.left = expected_shift + "px"
+      let rect = w_util.get_absolute_bound_rect(this.image)
+      let img_center = Math.ceil((rect.right + rect.left) / 2)
+      let expected_center = Math.ceil(w_util.ww() / 2)
+      let diff = expected_center - img_center
+      if (diff !== 0) {
+         this.image.style.left = rect.left + diff + "px"
+         console.log({
+            img_center: img_center,
+            expected_center: expected_center,
+         })
+      }
 
       this.onScroll()
    }
@@ -186,7 +192,7 @@ export class ImageSetter {
 
    remove_original_bg_images() {
       if (this.config.image_div) {
-         jq(this.config.image_div).remove()
+         jq(this.config.image_div)[0].remove()
       }
       document.body.style.backgroundImage = 'none'
    }
