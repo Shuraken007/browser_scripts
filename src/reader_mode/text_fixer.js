@@ -21,29 +21,20 @@ export class TextFixer {
       if (!content_div) return
 
       let paragraph_content = []
-      let child_nodes = [...content_div.childNodes]
-      for (let node of child_nodes) {
-         switch (node.nodeType) {
-            case Node.ELEMENT_NODE:
-               if (node.tagName !== "BR") break;
-               if (d_util.is_immersive_translate_br(node)) {
-                  paragraph_content = []
-                  break
-               }
-               if (paragraph_content.length === 0) break;
-               let new_paragraph = document.createElement("p");
-               paragraph_content.forEach(n => {
-                  content_div.removeChild(n)
-                  new_paragraph.appendChild(n)
-               })
-               content_div.insertBefore(new_paragraph, node)
-               content_div.removeChild(node)
-               paragraph_content = []
-               break;
-            case Node.TEXT_NODE:
-               if (!node.textContent.trim()) break;
-               paragraph_content.push(node)
-               break;
+      let text_nodes = new d_util.TextNodes({ root: content_div }).filter(n => n.parentNode === content_div)
+      for (let node of text_nodes) {
+         if (node.tagName === "BR") {
+            if (paragraph_content.length === 0) continue;
+            let new_paragraph = document.createElement("p");
+            paragraph_content.forEach(n => {
+               content_div.removeChild(n)
+               new_paragraph.appendChild(n)
+            })
+            content_div.insertBefore(new_paragraph, node)
+            content_div.removeChild(node)
+            paragraph_content = []
+         } else {
+            paragraph_content.push(node)
          }
       }
    }

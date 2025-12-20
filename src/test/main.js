@@ -2,92 +2,100 @@ async function delay(ms) {
    return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-class TextNodes {
-   constructor({ root, is_visible = true, is_empty_allowed = false, exclude_node_tags = ['SCRIPT', 'STYLE', 'IFRAME'] }) {
-      this.root = root
-      this.exclude_node_tags = exclude_node_tags
-      this.is_visible = is_visible
-      this.is_empty_allowed = is_empty_allowed
+async function xml_request(url) {
+   return new Promise((resolve, reject) => {
+      GM.xmlHttpRequest({
+         method: 'GET',
+         url: url,
+         responseType: 'text',
+         headers: {
+            'Content-Type': 'text/css'
+         },
+         onload: response => {
+            return resolve(response)
+         },
+         onabort() {
+            reject(new DOMException("Aborted", "AbortError"));
+         },
+         ontimeout() {
+            reject(new TypeError("Network request failed, timeout"));
+         },
+         onerror(err) {
+            reject(new TypeError("Failed to fetch: " + err.finalUrl));
+         },
+      });
+   })
+}
+
+async function xml_load(url) {
+   let response;
+   try {
+      response = await xml_request(url);
+   } catch (err) {
+      throw Error(
+         `loading: ${url}f
+          err: ${err}`);
    }
-
-   is_valid(node) {
-      if (!node)
-         return false
-      // not visible node
-      if (this.is_visible && ![document, document.body].includes(node) && node.offsetParent === null)
-         return false
-      if (node.tagName && this.exclude_node_tags.includes(node.tagName)) {
-         return false
-      }
-
-      return true
-   }
-
-   is_node_skipped(node) {
-      if (this.is_empty_allowed)
-         return false
-      if (!node.textContent.trim())
-         return true
-      return false
-   }
-
-   is_immersive_translate_br(node) {
-      if (node.tagName !== "BR")
-         return false
-      if (node.hasAttribute("data-immersive-translate-walked"))
-         return true
-      if (node.parentNode && node.parentNode.hasAttribute("data-immersive-translate-translation-element-mark"))
-         return true
-      return false
-   }
-
-   *next(node = this.root) {
-      if (!this.is_valid(node)) return
-      let type = node.nodeType
-      if (type === Node.ELEMENT_NODE && node.tagName === "BR") {
-         // don't touch external plugin
-         if (this.is_immersive_translate_br(node)) return
-         yield node
-      } else if (type === Node.ELEMENT_NODE && node.tagName !== "BR") {
-         for (let child of node.childNodes) {
-            yield* this.next(child)
-         }
-      } else if (type === Node.TEXT_NODE) {
-         if (this.is_node_skipped(node)) return;
-         yield node
-      }
-   }
-
-   *[Symbol.iterator]() {
-      yield* this.next()
-   }
-
-   filter(call) {
-      let query = this[Symbol.iterator]().filter(call)
-      return [...query]
-   }
-
-   get_length() {
-      let query = this[Symbol.iterator]()
-      let length = 0
-      for (let _ of query) {
-         length += 1
-      }
-      return length
+   if (response.status == 200) {
+      return response.responseText;
+   } else {
+      throw Error(
+         `loading: ${url}
+            status: ${response.status}
+            response: ${response.response}
+            `);
    }
 }
 
-async function main() {
-   let root = document.body
-   if (!root) return
+const api_url = "https://wallhaven.cc/api/v1/search";
+let url_params = {
+   apikey: "6Vtfzpdd27pwfVKC79xoRRJHrxSChwUL",
+   categories: "111", // General, Anime, People 
+   purity: "110", // SFW, Sketchy, NSFW 
+   sorting: "random", // date_added relevance random views favorites toplist automaticlly  
+   topRange: "1y", // 1d 3d 1w 1M 3M 6M 1y 
+   // order: "desc",
+   ratios: "", // landscape portrait 16x9 16x10 21x9 32x9 ... 
+   atleast: "800x500", // 
+}
 
-   let text_nodes = new TextNodes({ root: document.body })
-   // let brs = text_nodes.filter(node => node.tagName === "BR")
-   // let brs = [...text_nodes[Symbol.iterator]().filter(node => node.tagName === "BR")]
-   // console.log(text_nodes.get_length())
-   // for (let node of text_nodes[Symbol.iterator]().filter(node => node.tagName === "BR")) {
-   //    console.log(node.textContent)
-   // }
+class RndWallpaper {
+   constructor() {
+      this.fix_url = this.build_url_fix_part();
+      this.cache = {}
+      this.alpha_digit_str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+   }
+
+   build_url_fix_part() {
+      let query_params = Object.entries(url_params).map(([k, v]) => `${k}=${v}`);
+      return `${api_url}?${query_params.join("&")}`
+   }
+
+   get_rnd_seed() {
+      let seed = ""
+      let len = this.alpha_digit_str.length
+      for (let i = 0; i < 6; i++) {
+         seed += this.alpha_digit_str[Math.floor(Math.random() * len)]
+      }
+      return seed;
+   }
+
+   async get_url() {
+      let seed = this.get_rnd_seed();
+      let url = `${this.fix_url}&seed=${seed}`;
+      let data = await xml_load(url);
+      let res = JSON.parse(data)
+      return res.data[0].url
+   }
+}
+
+const tags = ['grass', 'castle', 'river', 'mountain', 'forest', 'sea', 'beach', 'night', 'sky', 'art', 'landscape', 'fantasy', ''];
+
+async function main() {
+   await delay(1000);
+   let rnd_wallpaper = new RndWallpaper();
+   let res = await rnd_wallpaper.get_url();
+   console.log(res);
 }
 
 main()

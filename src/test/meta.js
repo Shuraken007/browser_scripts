@@ -10,6 +10,7 @@
 
 // @grant GM.getValue
 // @grant GM.setValue
+// @grant GM.xmlHttpRequest
 
 // ==/UserScript==
 
