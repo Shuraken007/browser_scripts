@@ -11,6 +11,7 @@
 // @run-at         document-start
 // @grant          GM_setValue
 // @grant          GM_getValue
+// @grant          GM_xmlhttpRequest
 // @grant          unsafeWindow
 // ==/UserScript==
 

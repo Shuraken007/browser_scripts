@@ -8,7 +8,6 @@
 
 BOOK_INCLUDE_HTTP
 // @run-at        document-start
-// @grant          unsafeWindow
 
 // ==/UserScript==
 

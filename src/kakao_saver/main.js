@@ -207,7 +207,9 @@ class Scrapper {
          let chapter_id = `${chapter_rel_number} | ${chapter_abs_number}`
          for (let i = 0; i < urls.length; i++) {
             let url = urls[i]
-            promises.push(scheduler.addJob('recognize', url))
+            let response = await GM.xmlHttpRequest({ url: url }).catch(e => console.error(e));
+            console.log(response)
+            // promises.push(scheduler.addJob('recognize', url))
          }
          console.log(`started chapter ${chapter_id}, analyzing ${urls.length} images`)
          await Promise.all(promises)
@@ -224,8 +226,8 @@ class Scrapper {
       }
       scheduler.terminate()
       let file_name = `kakao_book-${sorted_pairs.length}_chapters-${Date.now()}.txt`;
-
-      save_to_file(chapters.join(''), file_name)
+      console.log(chapters.join(''))
+      // save_to_file(chapters.join(''), file_name)
    }
 
    async scan_text() {

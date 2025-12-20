@@ -1,13 +1,13 @@
 import { ScriptRunner } from "../script_runner.js";
 import { rnd_from_arr, isString, escapeRegexChars } from "../util/common.js";
-import { get_text_nodes } from "../util/dom.js";
+import { TextNodes } from "../util/dom.js";
 import { CacheUrlLoader } from "../cache_url_loader.js"
 import { ClickDetector } from "./click_detector.js";
 import { ReplacementBuilder } from "./replacement_builder.js";
 import { ChineseConvertor } from "./chinese_convertor.js";
 
 async function replaceText(node, replacements, replaced_nodes, runner) {
-   let text_nodes = get_text_nodes(node, false)
+   let text_nodes = new TextNodes({ root: node, is_visible: false })
    for (let node of text_nodes) {
       let text = node.textContent;
       // console.log(node.nodeType, node.nodeValue)

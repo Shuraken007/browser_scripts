@@ -288,11 +288,3 @@ script_runner = new ScriptRunner(
       mutation_mode: mutation_modes.once_per_bunch,
    });
 script_runner.run()
-
-Object.assign(
-   unsafeWindow,
-   {
-      reader: reader,
-      get_text_nodes: d_util.get_text_nodes,
-   }
-)

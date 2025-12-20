@@ -1,4 +1,4 @@
-import { get_text_nodes, get_node_parents, get_node_parent, is_node_in } from '../util/dom.js'
+import { TextNodes, get_node_parents, get_node_parent, is_node_in } from '../util/dom.js'
 import { jq, jqs } from '../util/jq.js'
 import { get_absolute_bound_rect } from '../util/window.js'
 
@@ -67,13 +67,14 @@ export class PageAnalyzer {
    getTornOutNodes() {
       let content_div = this.divs['content'].get()
       if (!content_div) return
-      let text_nodes = get_text_nodes(content_div)
+      let text_nodes = new TextNodes({ root: content_div })
       let nodes = new Set()
       for (let node of text_nodes) {
          if (!this.is_text_node_styled(node, content_div)) continue
          let parent = this.get_nearest_sentence_container(node)
          if (!parent) continue
-         if (get_text_nodes(parent).length === 1) continue
+         let parent_text_nodes = new TextNodes({ root: parent })
+         if (parent_text_nodes.get_length() === 1) continue
          nodes.add(parent)
       }
       return [...nodes]
@@ -83,10 +84,11 @@ export class PageAnalyzer {
       let content_div = this.divs['content'].get()
       if (!content_div) return
 
-      let text_nodes = get_text_nodes(content_div)
+      let text_nodes = new TextNodes({ root: content_div })
       let paragraphs = new Set()
       for (let node of text_nodes) {
-         let paragraph = get_node_parent(node, 'P') || get_node_parent(node, 'SPAN')
+         let paragraph = get_node_parent(node, 'P') || get_node_parent(node, 'SPAN') || get_node_parent(node, 'DIV')
+         if (paragraph === content_div) continue
          if (paragraph) {
             paragraphs.add(paragraph)
          }
@@ -95,7 +97,7 @@ export class PageAnalyzer {
    }
 
    update_divs() {
-      let text_nodes = get_text_nodes(document.body)
+      let text_nodes = new TextNodes({ root: document.body })
       let is_reset = this.is_reset(text_nodes)
       this.text_nodes_amount = text_nodes.length
       this.reset_on_update = false
@@ -216,7 +218,8 @@ export class PageAnalyzer {
       }
       if (node === content_div)
          return null
-      if (get_text_nodes(node).length <= 1)
+      let text_nodes = new TextNodes({ root: node })
+      if (text_nodes.get_length() <= 1)
          return null
       return node
    }

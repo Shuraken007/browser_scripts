@@ -8,6 +8,9 @@
 
 // @include *
 
+// @grant GM.getValue
+// @grant GM.setValue
+
 // ==/UserScript==
 
 /* jshint esversion: 9 */

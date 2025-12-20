@@ -6,17 +6,51 @@ export class TextFixer {
    }
 
    run() {
-      let paragraphs = this.page_analyser.getParagraphs()
+      this.try_wrap_paragraphs()
 
+      let paragraphs = this.page_analyser.getParagraphs()
       for (let paragraph of paragraphs) {
          this.remove_duplicate_br(paragraph)
       }
       this.join()
    }
 
+   try_wrap_paragraphs() {
+      let [divs,] = this.page_analyser.getDivs()
+      let content_div = divs[0]
+      if (!content_div) return
+
+      let paragraph_content = []
+      let child_nodes = [...content_div.childNodes]
+      for (let node of child_nodes) {
+         switch (node.nodeType) {
+            case Node.ELEMENT_NODE:
+               if (node.tagName !== "BR") break;
+               if (d_util.is_immersive_translate_br(node)) {
+                  paragraph_content = []
+                  break
+               }
+               if (paragraph_content.length === 0) break;
+               let new_paragraph = document.createElement("p");
+               paragraph_content.forEach(n => {
+                  content_div.removeChild(n)
+                  new_paragraph.appendChild(n)
+               })
+               content_div.insertBefore(new_paragraph, node)
+               content_div.removeChild(node)
+               paragraph_content = []
+               break;
+            case Node.TEXT_NODE:
+               if (!node.textContent.trim()) break;
+               paragraph_content.push(node)
+               break;
+         }
+      }
+   }
+
    remove_duplicate_br(paragraph) {
       this.try_remove_sibling_br(paragraph)
-      let nodes = d_util.get_text_nodes(paragraph, true, true)
+      let nodes = new d_util.TextNodes({ root: paragraph, is_empty_allowed: true })
       let is_empty = false
       let is_text_started = false
       for (let node of nodes) {
@@ -25,8 +59,9 @@ export class TextFixer {
             is_text_started = true
             continue
          }
-         if (is_text_started && !is_empty)
+         if (is_text_started && !is_empty) {
             this.add_paragraph(paragraph, node)
+         }
          if (!is_empty) {
             is_empty = true
             continue
@@ -44,12 +79,11 @@ export class TextFixer {
       if (!(sibling && sibling.tagName)) return
       if (sibling.tagName !== "BR") return
       sibling.parentNode.removeChild(sibling)
-      console.log('remobed')
    }
 
    add_paragraph(paragraph, cur_node) {
       let new_paragraph = document.createElement("p");
-      let nodes = d_util.get_text_nodes(paragraph, true, true)
+      let nodes = new d_util.TextNodes({ root: paragraph, is_empty_allowed: true })
       for (let node of nodes) {
          if (node === cur_node) {
             node.parentNode.removeChild(node)
@@ -57,7 +91,7 @@ export class TextFixer {
          }
          if (!node.parentNode)
             continue
-         let child = d_util.get_node_parent_before(node, 'P') || d_util.get_node_parent_before(node, 'SPAN')
+         let child = d_util.get_node_parent_before(node, 'P') || d_util.get_node_parent_before(node, 'SPAN') || d_util.get_node_parent_before(node, 'DIV')
          child.parentNode.removeChild(child)
          new_paragraph.appendChild(child)
       }
@@ -71,7 +105,7 @@ export class TextFixer {
    }
 
    join_sentence(node) {
-      let text_nodes = d_util.get_text_nodes(node, false)
+      let text_nodes = new d_util.TextNodes({ root: node })
       let concat_node = null
       let prev_br_node = null
       for (let text_node of text_nodes) {

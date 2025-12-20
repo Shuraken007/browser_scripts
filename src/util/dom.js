@@ -1,35 +1,78 @@
 const exclude_node_tags = ['SCRIPT', 'STYLE', 'IFRAME']
 
-export function get_text_nodes(node, is_visible = true, is_trimmed = false, all_nodes = []) {
-   if (!node)
-      return all_nodes
-   // not visible node
-   if (is_visible && ![document, document.body].includes(node) && node.offsetParent === null)
-      return all_nodes
-   if (node.tagName && exclude_node_tags.includes(node.tagName)) {
-      return all_nodes
+export class TextNodes {
+   constructor({ root, is_visible = true, is_empty_allowed = false, exclude_node_tags = ['SCRIPT', 'STYLE', 'IFRAME'] }) {
+      this.root = root
+      this.exclude_node_tags = exclude_node_tags
+      this.is_visible = is_visible
+      this.is_empty_allowed = is_empty_allowed
    }
 
-   switch (node.nodeType) {
-      case Node.DOCUMENT_NODE:
-      case Node.ELEMENT_NODE:
-         if (node.tagName === "BR" && node.hasAttribute("data-immersive-translate-walked"))
-            break;
-         if (node.tagName === "BR" && node.parentNode
-            && node.parentNode.hasAttribute("data-immersive-translate-translation-element-mark"))
-            break;
-         if (node.tagName === "BR")
-            all_nodes.push(node)
-         else
-            node.childNodes.forEach((child) => get_text_nodes(child, is_visible, is_trimmed, all_nodes));
-         break;
-      case Node.TEXT_NODE: {
-         if (!is_trimmed && !node.textContent.trim()) break;
-         all_nodes.push(node)
-         break;
+   is_valid(node) {
+      if (!node)
+         return false
+      // not visible node
+      if (this.is_visible && ![document, document.body].includes(node) && node.offsetParent === null)
+         return false
+      if (node.tagName && this.exclude_node_tags.includes(node.tagName)) {
+         return false
+      }
+
+      return true
+   }
+
+   is_node_skipped(node) {
+      if (this.is_empty_allowed)
+         return false
+      if (!node.textContent.trim())
+         return true
+      return false
+   }
+
+   is_immersive_translate_br(node) {
+      if (node.tagName !== "BR")
+         return false
+      if (node.hasAttribute("data-immersive-translate-walked"))
+         return true
+      if (node.parentNode && node.parentNode.hasAttribute("data-immersive-translate-translation-element-mark"))
+         return true
+      return false
+   }
+
+   *next(node = this.root) {
+      if (!this.is_valid(node)) return
+      let type = node.nodeType
+      if (type === Node.ELEMENT_NODE && node.tagName === "BR") {
+         // don't touch external plugin
+         if (this.is_immersive_translate_br(node)) return
+         yield node
+      } else if (type === Node.ELEMENT_NODE && node.tagName !== "BR") {
+         for (let child of node.childNodes) {
+            yield* this.next(child)
+         }
+      } else if (type === Node.TEXT_NODE) {
+         if (this.is_node_skipped(node)) return;
+         yield node
       }
    }
-   return all_nodes
+
+   *[Symbol.iterator]() {
+      yield* this.next()
+   }
+
+   filter(call) {
+      let query = this[Symbol.iterator]().filter(call)
+      return [...query]
+   }
+
+   get_length() {
+      let query = this[Symbol.iterator]()
+      let length = 0
+      for (let _ of query) {
+         length += 1
+      }
+      return length
+   }
 }
 
 export function get_node_parents(node, parents = []) {
