@@ -9,15 +9,16 @@ const __dirname = dirname(__filename);
 
 let config = {
    entry: {
+      test: './src/test/main.js',
       cleaner: './src/cleaner/main.js',
       reader_mode: './src/reader_mode/main.js',
       word_text_replace: './src/word_text_replace/main.js',
-      kakao_saver: './src/kakao_saver/main.js',
-      kakao_saver_min: './src/kakao_saver/main.js',
-      simple_mmo: './src/simple_mmo/main.js',
-      kittens_game: './src/kittens_game/main.js',
-      shop_bot: './src/shop_bot/main.js',
-      test: './src/test/main.js',
+      wallpaper: './src/wallpaper/main.js',
+      // shop_bot: './src/shop_bot/main.js',
+      // kakao_saver: './src/kakao_saver/main.js',
+      // kakao_saver_min: './src/kakao_saver/main.js',
+      // kittens_game: './src/kittens_game/main.js',
+      // simple_mmo: './src/simple_mmo/main.js',
    },
    output: {
       filename: '[name].js',
@@ -31,12 +32,17 @@ let config = {
          ['config.jsonc', 'config_example.jsonc'],
          [
             'GIST_TOKEN', 'GIST_ID', 'GIST_FILE',
+            'WALLHAVEN_TOKEN',
             'BOOK_INCLUDE_HTTP',
             'SHOP_INCLUDE_HTTP',
             'READER_MODE_CONFIG_URL',
             'CLEANER_CONFIG_URL',
             'WORD_TEXT_REPLACE_CONFIG_URL',
+            'WALLPAPER_CONFIG_URL',
             'SHOP_BOT_CONFIG_URL',
+            'GOOGLE_CLIENT_SECRETS',
+            'GOOGLE_SYNC_FOLDER',
+            'TEST_USER_GMAIL'
          ]
       ),
    ],
@@ -46,6 +52,11 @@ let config = {
             exclude: /(node_modules)/,
             test: /\.css$/i,
             use: ['style-loader', 'css-loader'],
+         },
+         {
+            exclude: /(node_modules)/,
+            test: /\.html$/,
+            use: 'html-loader',
          },
       ],
    },

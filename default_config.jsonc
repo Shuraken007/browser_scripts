@@ -3,18 +3,42 @@
    "GIST_TOKEN": "",
    "GIST_ID": "",
    "GIST_FILE": "",
+   "WALLHAVEN_TOKEN": "",
    "BOOK_INCLUDE_HTTP": [
       "https://ranobelib.me*",
       "https://novelbin.com*",
+      "https://www.novelbin.com*",
+      "https://novelhall.com*",
+      "https://www.novelhall.com*",
       "https://www.royalroad.com*",
       "https://ranobes.top*",
+      "https://ranobe.me*",
       "https://tw.wa01.com*",
       "https://www.wa01.com*",
-      "https://ranobe.me*"
+      "https://www.sousetsuka.com*",
+      "https://thezombieknight.blogspot.com*",
+      "https://booktoki468.com*",
+      "https://www.69shuba.com*"
    ],
    "SHOP_INCLUDE_HTTP": [
       "https://av.ru*"
    ],
    "READER_MODE_CONFIG_URL": "https://api.npoint.io/ec469b350811e7bacb82",
-   "WORD_TEXT_REPLACE_CONFIG_URL": "https://api.npoint.io/ec469b350811e7bacb82"
+   "CLEANER_CONFIG_URL": "https://api.npoint.io/ec469b350811e7bacb82",
+   "WALLPAPER_CONFIG_URL": "https://api.npoint.io/ec469b350811e7bacb82",
+   "WORD_TEXT_REPLACE_CONFIG_URL": "https://api.npoint.io/ec469b350811e7bacb82",
+   "SHOP_BOT_CONFIG_URL": "https://api.npoint.io/8f74d08f645004e1f05b",
+   "GOOGLE_CLIENT_SECRETS": {
+      "client_id": "489632-some_id.apps.googleusercontent.com",
+      "project_id": "any_project_name-985632",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_secret": "OILOKJ-SOME_SECRET-8953",
+      "redirect_uris": [
+         "http://localhost"
+      ]
+   },
+   "GOOGLE_SYNC_FOLDER": "Userscripts",
+   "TEST_USER_GMAIL": "my_mail@gmail.com"
 }

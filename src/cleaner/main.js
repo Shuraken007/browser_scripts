@@ -1,4 +1,4 @@
-import { urlToRegex, merge_obj } from '../util/common.js'
+import { urlToRegex, merge_obj, delay } from '../util/common.js'
 import { jq } from '../util/jq.js'
 import { ScriptRunner, mutation_modes } from "../script_runner.js";
 import { CacheUrlLoader } from "../cache_url_loader.js"
@@ -48,6 +48,8 @@ class Cleaner {
          return this.stop()
 
       this.run()
+      await this.onMutation()
+      await delay(200)
       await this.onMutation()
    }
 

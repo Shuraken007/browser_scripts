@@ -1,9 +1,9 @@
 import { delay } from "./util/common.js"
-import { IntervalRunner } from "./reader_mode/interval_runner.js"
+import { wait_body_load } from "./util/window.js"
 
 export const mutation_modes = {
    each_mutation: "each_mutation",
-   once_per_bunch: "once_per_bunc"
+   once_per_bunch: "once_per_bunch"
 }
 
 // script support: onLoad, onMutation, onUrlUpdate, onError
@@ -132,15 +132,8 @@ export class ScriptRunner {
    }
 
    async is_ready() {
-      let script_end
-      while (!(document && document.body && document.body.clientWidth)) {
-         await delay(20)
-         script_end = Date.now()
-         if (script_end - this.script_start > this.max_wait_ready_ms) {
-            return false
-         }
-      }
-      if (script_end - this.script_start > 2000)
+      await wait_body_load(this.max_wait_ready_ms)
+      if (Date.now() - this.script_start > 2000)
          console.log(`script_runner ${this.name}: document load over ${script_end - this.script_start} ms`);
 
       return true

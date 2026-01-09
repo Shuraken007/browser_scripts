@@ -1,3 +1,5 @@
+import { delay } from "./common.js"
+
 // window width
 export function ww() {
    return document.body.clientWidth
@@ -65,4 +67,17 @@ function is_node_visible(node) {
 export function is_visible(node) {
    // window.getComputedStyle(el).opacity !== '0' && window.getComputedStyle(el.offsetParent).opacity !== '0'
    return is_node_visible(node) && is_node_visible(node.offsetParent)
+}
+
+export async function wait_body_load(timeout = 10000) {
+   let start = Date.now()
+   let end = start
+   while (!(document && document.body && document.body.clientWidth)) {
+      await delay(20)
+      end = Date.now()
+      if (end - start > timeout) {
+         return false
+      }
+   }
+   return true
 }

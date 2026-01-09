@@ -5,11 +5,8 @@ import * as w_util from '../util/window.js'
 import * as d_util from '../util/dom.js'
 import { ScriptRunner, mutation_modes } from "../script_runner.js";
 import { CacheUrlLoader } from "../cache_url_loader.js"
-import { SyncSession } from "./sync_session.js"
-import { ImageLoader } from "./image_loader.js"
-import { PageAnalyzer } from './page_analyser.js'
-import { ImageSetter } from './image_setter.js'
-import { CssClassSetter } from './css_class_setter.js'
+import { PageAnalyzer } from '../util/page_analyser.js'
+import { CssClassSetter } from '../util/css_class_setter.js'
 import { TextFixer } from './text_fixer.js'
 
 let script_runner;
@@ -18,10 +15,7 @@ class Reader {
    constructor() {
       this.cache_url_loader = new CacheUrlLoader(() => { this.onReload() })
 
-      this.sync_session = new SyncSession()
       this.page_analyser = null
-      this.image_loader = null
-      this.image_setter = null
       this.css_class_setter = null
       this.text_fixer = null
 
@@ -63,8 +57,6 @@ class Reader {
          suited_keys.push(k)
          if (!v.hasOwnProperty('is_reader'))
             v.is_reader = true
-         if (!v.hasOwnProperty('is_wallpaper'))
-            v.is_wallpaper = true
       }
       suited_keys.sort((a, b) => {
          let l_a = this.loaded_config[a].url.length
@@ -111,13 +103,10 @@ class Reader {
    }
 
    run() {
-      if (!this.image_loader.is_on() && this.config.is_wallpaper !== false)
-         this.image_loader.run()
       if (this.on)
          return
       this.on = true
-      // this.sync_session.run()
-      this.image_setter.run()
+
       window.addEventListener("resize", this.onResizeCall);
       if (this.config.next)
          window.addEventListener("scroll", this.onScrollCall);
@@ -127,9 +116,6 @@ class Reader {
       if (!this.on)
          return
       this.on = false
-      this.sync_session.stop()
-      this.image_loader.stop()
-      this.image_setter.stop()
       this.css_class_setter.ResetClasses()
       window.removeEventListener("resize", this.onResizeCall);
       window.removeEventListener("scroll", this.onScrollCall);
@@ -140,12 +126,6 @@ class Reader {
       this.css_class_setter = new CssClassSetter(this.config.ignore)
       this.page_analyser = new PageAnalyzer(this.config)
       this.text_fixer = new TextFixer(this.page_analyser)
-      this.image_setter = new ImageSetter(this.config, this.page_analyser, this.css_class_setter)
-      this.image_loader = new ImageLoader({
-         config: this.config.wallpapers,
-         onUpdate: (image) => { this.set_image(image) },
-         session: this.sync_session
-      })
 
       if (!this.any_url_matched)
          return this.stop()
@@ -160,12 +140,9 @@ class Reader {
       let new_config = this.build_config_by_width(this.config_by_url)
       if (!util.are_obj_equal(this.config, new_config)) {
          this.config = new_config
-         this.image_loader.onReload(this.config.wallpapers)
          this.page_analyser.onReload(this.config)
-         this.image_setter.onReload(this.config)
       }
       this.update_css()
-      this.image_setter.onResize()
       this.onMutation()
    }
 
@@ -177,7 +154,6 @@ class Reader {
    async onReload() {
       // await this.init()
       // await this.onLoad()
-      // this.image_loader.onReload({ config: this.config.wallpapers })
    }
 
    async onUrlUpdate() {
@@ -192,7 +168,6 @@ class Reader {
 
    onError(err) {
       console.log(err)
-      this.image_loader.onError()
       this.cache_url_loader.onError()
    }
 
@@ -262,10 +237,6 @@ class Reader {
 
    add_body_css() {
       this.css_class_setter.AddOverridingClass(document.body, 'body', false)
-   }
-
-   async set_image(image) {
-      await this.image_setter.set(image)
    }
 
    onScroll() {

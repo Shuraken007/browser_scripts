@@ -1,7 +1,9 @@
-import { isImage } from '../util/common.js'
+import { isImage, delay } from '../util/common.js'
 import * as w_util from '../util/window.js'
 import { get_node_parents } from '../util/dom.js'
 import { jq } from '../util/jq.js'
+import { CssClassSetter } from '../util/css_class_setter.js'
+
 class ImageCalc {
    constructor() {
       this.image = null
@@ -74,50 +76,67 @@ class ImageCalc {
 
 const image_div_name = 'userscript_reader_mode_image_div'
 export class ImageSetter {
-   constructor(config, page_analyser, css_class_setter) {
+   constructor(config, page_analyser) {
       this.image = null;
 
       this.config = config
       this.page_analyser = page_analyser
-      this.css_class_setter = css_class_setter
+      this.css_class_setter = new CssClassSetter()
+
       this.image_calc = new ImageCalc()
       this.image_div = this.create_image_div()
       this.onScrollCall = () => { this.onScroll() }
+      this.onResizeCall = () => { this.onResize() }
+
+      this.image_loaded = null
    }
 
    run() {
       window.addEventListener("scroll", this.onScrollCall);
+      window.addEventListener("resize", this.onResizeCall);
       this.image_div.style.opacity = 'block'
    }
 
    stop() {
       window.removeEventListener("scroll", this.onScrollCall);
+      window.removeEventListener("resize", this.onResizeCall);
       this.image_div.style.opacity = 'none'
    }
 
-   set(image) {
-      if (!isImage(image)) {
-         console.log('not an image')
-         console.log(image)
-         return
+   async set(src, timeout = 6000) {
+      this.image.src = src;
+      let start = Date.now()
+      while (this.image_loaded === null) {
+         await delay(100)
+         if (Date.now() - start > timeout)
+            return false
       }
-      this.image_calc.set(image)
-      if (this.image)
-         this.image_div.removeChild(this.image)
-      this.image_div.appendChild(image)
-      this.image = image
-      this.css_class_setter.AddClass(image, 'image', false)
+      let end = Date.now()
+      console.log(`loaded in: ${end - start} : ${this.image_loaded}`)
+      let res = this.image_loaded
+      this.image_loaded = null
+      return res
+   }
+
+   onImageLoad() {
+      this.image_calc.set(this.image)
       this.onResize()
       this.onScroll()
       this.remove_original_bg_images()
-      // this.run_animation()
+      this.image_loaded = true
+   }
+
+   onImageError() {
+      this.image_loaded = false
    }
 
    onReload(config) {
       this.config = config
    }
 
-   onResize() {
+   async onResize() {
+      await delay(200) // prevent bugs
+
       if (!this.image)
          return
       this.image_calc.onResize()
@@ -167,6 +186,14 @@ export class ImageSetter {
          document.body.prepend(div);
       }
       this.css_class_setter.AddClass(div, 'image_div', false)
+
+      this.image = new Image();
+      this.image.addEventListener('load', () => { this.onImageLoad() });
+      this.image.addEventListener('error', () => { this.onImageError() });
+      this.css_class_setter.AddClass(this.image, 'image', false)
+
+      div.appendChild(this.image)
+
       return div
    }
 
@@ -191,9 +218,10 @@ export class ImageSetter {
    }
 
    remove_original_bg_images() {
-      if (this.config.image_div) {
-         jq(this.config.image_div)[0].remove()
-      }
+      if (!this.config.image_div) return
+      let image_div = jq(this.config.image_div)
+      if (!image_div || image_div.length === 0) return
+      image_div[0].remove()
       document.body.style.backgroundImage = 'none'
    }
 
@@ -224,5 +252,4 @@ export class ImageSetter {
          }, i * time / frames_n);
       }
    }
-
 }

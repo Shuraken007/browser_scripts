@@ -10,7 +10,7 @@ export class IntervalRunner {
    }
 
    async init() {
-      this.last_synced = await localStorage.getItem(this.storage_key) || Date.now()
+      this.last_synced = await GM.getValue(this.storage_key) || Date.now()
    }
 
    onReload({ interval_min = this.interval_min }) {
@@ -18,7 +18,7 @@ export class IntervalRunner {
    }
 
    onError() {
-      localStorage.removeItem(this.storage_key);
+      GM.deleteValue(this.storage_key);
    }
 
    async run() {
@@ -52,7 +52,7 @@ export class IntervalRunner {
          return
       this.callback();
       this.last_synced = Date.now();
-      localStorage.setItem(this.storage_key, this.last_synced)
+      GM.setValue(this.storage_key, this.last_synced)
       this.run()
    }
 }

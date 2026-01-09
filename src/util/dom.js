@@ -101,6 +101,15 @@ export function get_node_parent_before(node, tagName) {
    return get_node_parent_before(parent, tagName)
 }
 
+export function get_nearest_parent_at_body(node) {
+   let parent = node.parentNode
+   if (!parent || [document].includes(parent))
+      return null
+   if (parent.tagName === 'BODY')
+      return node
+   return get_nearest_parent_at_body(parent)
+}
+
 export function get_node_siblings(node, node_type = null) {
    let siblings = []
    if (!node.parentNode)

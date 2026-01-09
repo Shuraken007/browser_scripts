@@ -15,11 +15,5 @@ BOOK_INCLUDE_HTTP
 {
    const CONFIG_URL = "READER_MODE_CONFIG_URL";
 
-   const GIST_CONFIG = {
-      token: "GIST_TOKEN",
-      id: "GIST_ID",
-      file: "GIST_FILE"
-   };
-
    SCRIPT_BODY
 };

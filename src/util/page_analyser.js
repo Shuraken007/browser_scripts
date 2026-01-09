@@ -137,7 +137,6 @@ export class PageAnalyzer {
 
    content(text_nodes) {
       let divs_with_text = this.get_divs_with_text(text_nodes)
-      console.log(divs_with_text)
       if (divs_with_text.length === 0)
          return null
       return divs_with_text[0][0]

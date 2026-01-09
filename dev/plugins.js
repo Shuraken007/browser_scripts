@@ -22,7 +22,6 @@ export class HeadInsert {
    add_meta(assets, compilation) {
       for (let i in assets) {
          const asset = compilation.getAsset(i);  // <- standardized version of asset object
-         console.log(asset.name)
          const source = asset.source.source(); // <- standardized way of getting asset source
 
          let dir_by_asset = asset.name.replace('_min', '')
@@ -97,16 +96,17 @@ export class ConfigInsert {
    insert_tokens(assets, compilation) {
       for (let i in assets) {
          const asset = compilation.getAsset(i);  // <- standardized version of asset object
-         // console.log(asset.name)
          const source = asset.source.source(); // <- standardized way of getting asset source
          let new_source = source
-
          for (const token of this.known_tokens) {
             if (!source.includes(token)) continue
             let replacement = this.config[token] || ""
 
             if (this.config[token] !== null && this[token]) {
                replacement = this[token](this.config[token])
+            }
+            if (typeof replacement == 'object') {
+               replacement = JSON.stringify(replacement).replace(/"/g, '\\"').replace(/\\n/g, '\\\\n')
             }
             new_source = new_source.replace(token, `${replacement}`)
          }
