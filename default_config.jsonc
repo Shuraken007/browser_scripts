@@ -1,8 +1,5 @@
 // rename to config.jsonc and fill with values
 {
-   "GIST_TOKEN": "",
-   "GIST_ID": "",
-   "GIST_FILE": "",
    "WALLHAVEN_TOKEN": "",
    "BOOK_INCLUDE_HTTP": [
       "https://ranobelib.me*",

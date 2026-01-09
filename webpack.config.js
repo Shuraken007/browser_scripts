@@ -31,7 +31,6 @@ let config = {
          __dirname,
          ['config.jsonc', 'config_example.jsonc'],
          [
-            'GIST_TOKEN', 'GIST_ID', 'GIST_FILE',
             'WALLHAVEN_TOKEN',
             'BOOK_INCLUDE_HTTP',
             'SHOP_INCLUDE_HTTP',
